@@ -139,11 +139,26 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
 .atribucio { font-size: 11.5px; color: var(--ink-2); margin-top: auto; }
 .atribucio a { color: inherit; }
 .leaflet-container { font: inherit; }
+.anar-fitxa { display: none; }
 .mode-afegir #mapa { cursor: crosshair; }
 
 @media (max-width: 820px) {
-  body { overflow: auto; grid-template-rows: auto auto auto; }
-  main { grid-template-columns: 1fr; grid-template-rows: 62vh auto; }
+  /* Al mòbil, desplaçament normal de la pàgina; el mapa no ocupa tota la pantalla
+     perquè sempre quedi una franja fora del mapa on lliscar el dit. */
+  html, body { height: auto; }
+  body { display: block; overflow: visible; }
+  main { display: block; }
+  #mapa { height: 52vh; height: 52svh; }
+  main.no-presencials .vista-llista { min-height: 40vh; }
+  .eines-mapa { top: 10px; left: 10px; right: 10px; }
+  aside { min-height: 60vh; }
+  .aproparse { bottom: auto; top: calc(52vh - 44px); top: calc(52svh - 44px); }
+  .anar-fitxa {
+    position: absolute; top: calc(52vh - 48px); top: calc(52svh - 48px); left: 12px; z-index: 500; display: block;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
+  }
+  main.no-presencials .anar-fitxa { display: none; }
   .eines-mapa { right: 12px; }
   aside { border-left: 0; border-top: 1px solid var(--line); }
   .marca span { display: none; }
@@ -185,6 +200,7 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
     </div>
   </div>
   <div class="aproparse" id="aproparse">Apropa't per veure tots els llocs</div>
+  <button class="anar-fitxa" id="anar-fitxa" type="button">↓ Informació</button>
 
   <section class="vista-llista" aria-label="Serveis no presencials">
     <input id="cerca-np" type="search" placeholder="Cerca un servei telefònic, web o app…" aria-label="Cerca serveis no presencials">
@@ -417,7 +433,7 @@ function pintaFitxa(l, meva, missatge) {
         ESCALA.map(e => `<button data-valor="${e.valor}" aria-pressed="${meva === e.valor}" title="${esc(e.descripcio)}">
           <span class="punt" style="background:${color(e.valor)}"></span>${cap(e.etiqueta)}</button>`).join("")
       }</div>
-      <p class="descripcio-valor" id="descripcio">${meva ? esc(ESCALA[meva - 1].descripcio) : "Passa per sobre d'una opció per veure'n la definició."}</p>
+      <p class="descripcio-valor" id="descripcio">${meva ? esc(ESCALA[meva - 1].descripcio) : (matchMedia("(hover: none)").matches ? "Cada opció té una definició; la veuràs en marcar-la." : "Passa per sobre d'una opció per veure'n la definició.")}</p>
       ${missatge ? `<div class="missatge ${missatge.error ? "error" : ""}">${esc(missatge.text)}</div>` : ""}
     </div>
     <p class="nota">Aquesta valoració es refereix només al respecte als drets lingüístics, no a la qualitat del producte o del servei.</p>
@@ -569,6 +585,8 @@ mapa.on("click", e => {
   else marcadorNou = L.marker(e.latlng).addTo(mapa);
   const a = document.getElementById("ajuda-punt"); if (a) a.textContent = "Ubicació marcada. Pots tornar a fer clic per corregir-la.";
 });
+
+document.getElementById("anar-fitxa").onclick = () => panell.scrollIntoView({ behavior: "smooth", block: "start" });
 
 // ---------- arrencada ----------
 (async () => {

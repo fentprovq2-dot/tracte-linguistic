@@ -140,6 +140,37 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
 .atribucio a { color: inherit; }
 .leaflet-container { font: inherit; }
 .anar-fitxa { display: none; }
+
+/* A prop meu */
+.btn-aprop {
+  border: 1px solid var(--accent); background: var(--panel); color: var(--accent); border-radius: 999px;
+  padding: 7px 12px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
+}
+.btn-aprop[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.controls-aprop { display: grid; gap: 10px; }
+.controls-aprop .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.controls-aprop select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.xips { display: flex; flex-wrap: wrap; gap: 6px; }
+.xips button {
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel);
+  border-radius: 999px; padding: 5px 10px; font-size: 13px; color: var(--ink-2);
+}
+.xips button .punt { width: 10px; height: 10px; border: 0; }
+.xips button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; background: var(--bg); }
+.xips button[aria-pressed="false"] .punt { opacity: .35; }
+.xips button .compte { font-variant-numeric: tabular-nums; color: var(--ink-2); font-weight: 400; }
+.grup-aprop h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 15px; }
+.grup-aprop h4 .punt { border: 0; }
+.grup-aprop h4 .meta { font-weight: 400; }
+.grup-aprop ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.grup-aprop li button {
+  width: 100%; text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+  border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 12px;
+}
+.grup-aprop li button:hover { background: var(--bg); }
+.grup-aprop .dist { color: var(--ink-2); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tornar { border: 0; background: transparent; color: var(--accent); font-weight: 600; padding: 0; text-align: left; }
+.mes { border: 0; background: transparent; color: var(--ink-2); font-size: 13px; padding: 4px 0; text-decoration: underline; }
 .mode-afegir #mapa { cursor: crosshair; }
 
 @media (max-width: 820px) {
@@ -198,6 +229,7 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
       <button aria-pressed="false" data-filtre="presencial">Comerços</button>
       <button aria-pressed="false" data-filtre="servei_public">Serveis públics</button>
     </div>
+    <button class="btn-aprop" id="btn-aprop" aria-pressed="false" type="button">📍 A prop meu</button>
   </div>
   <div class="aproparse" id="aproparse">Apropa't per veure tots els llocs</div>
   <button class="anar-fitxa" id="anar-fitxa" type="button">↓ Informació</button>
@@ -235,6 +267,13 @@ const cssColor = v => getComputedStyle(document.documentElement).getPropertyValu
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 
+function distanciaM(lat1, lon1, lat2, lon2) {
+  const r = Math.PI / 180, a = Math.sin((lat2 - lat1) * r / 2) ** 2
+    + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin((lon2 - lon1) * r / 2) ** 2;
+  return 6371000 * 2 * Math.asin(Math.sqrt(a));
+}
+const fmtDist = m => m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace(".", ",")} km`;
+
 // ---------- identificador anònim del dispositiu ----------
 function dispositiu() {
   try {
@@ -260,6 +299,14 @@ function apiSupabase() {
     },
     async valorar(id, valor) { const { data, error } = await sb.rpc("valorar", { p_lloc: id, p_valor: valor, p_dispositiu: dispositiu() }); if (error) err(error); return data; },
     async laMeva(id) { const { data, error } = await sb.rpc("la_meva_valoracio", { p_lloc: id, p_dispositiu: dispositiu() }); if (error) return null; return data; },
+    async aProp(p) {
+      const { data, error } = await sb.rpc("llocs_a_prop", {
+        p_lat: p.lat, p_lon: p.lon, p_radi_m: p.radi, p_valors: null, p_sense_qual: true,
+        p_categoria: p.categoria || null, p_limit: 1000,
+      });
+      if (error) err(error); return data;
+    },
+    async sectors() { const { data, error } = await sb.rpc("sectors"); if (error) return []; return data; },
     async proposa(l) {
       const { data, error } = await sb.rpc("proposa_lloc", {
         p_nom: l.nom, p_modalitat: l.modalitat, p_categoria: l.categoria, p_lat: l.lat ?? null, p_lon: l.lon ?? null,
@@ -316,6 +363,16 @@ function apiDemo() {
       return { ok: true, actualitzada: !!ja };
     },
     async laMeva(id) { return meves[id] ?? null; },
+    async aProp(p) {
+      return llocs.filter(l => l.lat != null && (!p.categoria || l.categoria === p.categoria))
+        .map(l => ({ ...resum(l), distancia_m: Math.round(distanciaM(p.lat, p.lon, l.lat, l.lon)) }))
+        .filter(l => l.distancia_m <= p.radi)
+        .map(l => ({ ...l, qualificacio: l.mitjana ? Math.round(l.mitjana) : null }));
+    },
+    async sectors() {
+      const c = {}; llocs.filter(l => l.lat != null).forEach(l => c[l.categoria] = (c[l.categoria] || 0) + 1);
+      return Object.entries(c).map(([categoria, n]) => ({ categoria, n })).sort((a, b) => b.n - a.n);
+    },
     async proposa(n) {
       const dup = llocs.find(l => l.modalitat === n.modalitat && norm(l.nom) === norm(n.nom));
       if (dup) return { id: dup.id, existent: true, nom: dup.nom };
@@ -334,6 +391,8 @@ document.getElementById("demo").hidden = !demo;
 let ESCALA = ESCALA_DEFECTE;
 let filtre = "";
 let seleccionat = null;
+let aprop = null;   // mode "A prop meu": { lat, lon, radi, categoria, valors: Set, files, oberts: Set, origen }
+let SECTORS = null;
 const marcadors = new Map();
 const panell = document.getElementById("panell");
 const main = document.getElementById("main");
@@ -361,6 +420,7 @@ function estilMarcador(l, actiu) {
 let peticio = 0;
 async function carregaMapa() {
   if (main.classList.contains("no-presencials")) return;
+  if (aprop) { pintaMarcadorsAprop(); return; }
   const b = mapa.getBounds();
   const id = ++peticio;
   try {
@@ -439,7 +499,11 @@ function pintaFitxa(l, meva, missatge) {
     <p class="nota">Aquesta valoració es refereix només al respecte als drets lingüístics, no a la qualitat del producte o del servei.</p>
     ${l.font === "osm" ? atribucio() : ""}`;
 
-  document.getElementById("tanca").onclick = inici;
+  document.getElementById("tanca").onclick = () => aprop ? pintaPanellAprop() : inici();
+  if (aprop) {
+    panell.insertAdjacentHTML("afterbegin", `<button class="tornar" id="tornar-aprop" type="button">← Tornar a la llista d'a prop</button>`);
+    document.getElementById("tornar-aprop").onclick = pintaPanellAprop;
+  }
   const desc = document.getElementById("descripcio");
   panell.querySelectorAll(".botons-valor button").forEach(b => {
     const e = ESCALA[b.dataset.valor - 1];
@@ -451,11 +515,176 @@ function pintaFitxa(l, meva, missatge) {
         const actualitzat = (await api.cerca({ text: l.nom, modalitat: l.modalitat, limit: 50 })).find(x => x.id === l.id) || l;
         seleccionat = actualitzat;
         pintaFitxa(actualitzat, e.valor, { text: r.actualitzada ? "Has canviat la teva valoració. Gràcies!" : "Valoració desada. Gràcies!" });
-        if (l.modalitat === "no_presencial") carregaNoPresencials(); else carregaMapa();
+        if (l.modalitat === "no_presencial") carregaNoPresencials();
+        else if (aprop) carregaAprop({ panell: false });
+        else carregaMapa();
       } catch (err) {
         pintaFitxa(l, meva, { text: err.message, error: true });
       }
     };
+  });
+}
+
+// ---------- a prop meu ----------
+const RADIS = [250, 500, 1000, 2000];
+const SENSE = 0; // clau del grup "sense prou valoracions"
+const btnAprop = document.getElementById("btn-aprop");
+
+btnAprop.onclick = () => aprop ? desactivaAprop() : localitza();
+
+function localitza() {
+  if (main.classList.contains("no-presencials")) document.querySelector('.pestanyes [data-vista="mapa"]').click();
+  panell.innerHTML = `<div class="cap"><h2>A prop teu</h2><button class="tancar" aria-label="Tanca" id="tanca">×</button></div>
+    <p class="meta">Cercant la teva ubicació…</p>`;
+  document.getElementById("tanca").onclick = inici;
+  if (matchMedia("(max-width: 820px)").matches) panell.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!("geolocation" in navigator)) return errorUbicacio("Aquest navegador no permet obtenir la ubicació.");
+  navigator.geolocation.getCurrentPosition(
+    pos => activaAprop(pos.coords.latitude, pos.coords.longitude, "ubicacio"),
+    e => errorUbicacio(e.code === 1
+      ? "No has donat permís per fer servir la ubicació. Pots activar-lo a la configuració del navegador."
+      : "No s'ha pogut obtenir la ubicació."),
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+}
+
+function errorUbicacio(text) {
+  panell.innerHTML = `<div class="cap"><h2>A prop teu</h2><button class="tancar" aria-label="Tanca" id="tanca">×</button></div>
+    <div class="missatge">${esc(text)}</div>
+    <p class="meta">També pots cercar a l'entorn del centre del mapa: mou-lo fins a la zona que t'interessi.</p>
+    <div class="files"><button class="btn primari" id="usa-centre" type="button">Cerca al centre del mapa</button></div>`;
+  document.getElementById("tanca").onclick = inici;
+  document.getElementById("usa-centre").onclick = () => { const c = mapa.getCenter(); activaAprop(c.lat, c.lng, "mapa"); };
+}
+
+function activaAprop(lat, lon, origen) {
+  const ant = aprop;
+  aprop = {
+    lat, lon, origen,
+    radi: ant?.radi || 500,
+    categoria: ant?.categoria || "",
+    valors: ant?.valors || new Set([1, 2, 3, 4, 5, 6]),
+    oberts: new Set(),
+    files: [],
+  };
+  btnAprop.setAttribute("aria-pressed", "true");
+  btnAprop.textContent = "📍 A prop meu ×";
+  carregaAprop({ panell: true, encaixa: true });
+}
+
+function desactivaAprop() {
+  aprop = null;
+  btnAprop.setAttribute("aria-pressed", "false");
+  btnAprop.textContent = "📍 A prop meu";
+  inici();
+  carregaMapa();
+}
+
+async function carregaAprop({ panell: ambPanell = true, encaixa = false } = {}) {
+  if (!aprop) return;
+  if (ambPanell) pintaPanellAprop(true);
+  try {
+    const [files] = await Promise.all([
+      api.aProp({ lat: aprop.lat, lon: aprop.lon, radi: aprop.radi, categoria: aprop.categoria || null }),
+      SECTORS ? null : api.sectors().then(s => SECTORS = s),
+    ]);
+    if (!aprop) return;
+    aprop.files = files.map(l => ({ ...l, qualificacio: l.qualificacio ?? (l.mitjana ? Math.round(l.mitjana) : null) }));
+    if (encaixa) mapa.fitBounds(L.latLng(aprop.lat, aprop.lon).toBounds(aprop.radi * 2), { padding: [20, 20] });
+    pintaMarcadorsAprop();
+    if (ambPanell) pintaPanellAprop();
+  } catch (e) {
+    if (ambPanell) panell.innerHTML = `<div class="missatge error">${esc(e.message)}</div>`;
+  }
+}
+
+// files visibles segons el filtre de modalitat (Tots / Comerços / Serveis públics)
+const filesAprop = () => aprop.files.filter(l => !filtre || l.modalitat === filtre);
+const grupDe = l => l.qualificacio || SENSE;
+
+function pintaMarcadorsAprop() {
+  capa.clearLayers(); marcadors.clear();
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  L.circle([aprop.lat, aprop.lon], { radius: aprop.radi, color: css("--accent"), weight: 1.5, fillOpacity: 0.04, interactive: false }).addTo(capa);
+  L.circleMarker([aprop.lat, aprop.lon], { radius: 7, color: "#ffffff", weight: 3, fillColor: css("--focus"), fillOpacity: 1, interactive: false })
+    .bindTooltip(aprop.origen === "ubicacio" ? "Ets aquí" : "Centre de la cerca").addTo(capa);
+  for (const l of filesAprop()) {
+    if (!aprop.valors.has(grupDe(l))) continue;
+    const m = L.circleMarker([l.lat, l.lon], estilMarcador(l, seleccionat?.id === l.id))
+      .bindTooltip(esc(l.nom), { direction: "top", offset: [0, -6] })
+      .on("click", () => obreFitxa(l));
+    m.addTo(capa); marcadors.set(l.id, { m, l });
+  }
+  document.getElementById("aproparse").style.display = "none";
+}
+
+function pintaPanellAprop(carregant) {
+  if (!aprop) return;
+  seleccionat = null;
+  for (const { m, l } of marcadors.values()) m.setStyle(estilMarcador(l, false));
+  const files = carregant ? [] : filesAprop();
+  const compte = {}; files.forEach(l => compte[grupDe(l)] = (compte[grupDe(l)] || 0) + 1);
+  const ordre = [6, 5, 4, 3, 2, 1, SENSE];
+  const etiquetaGrup = k => k === SENSE ? "Sense prou valoracions" : cap(ESCALA[k - 1].etiqueta);
+  const estilPunt = k => k === SENSE ? "background:var(--panel);border:2px solid var(--pocs)" : `background:${color(k)}`;
+  const qualificats = files.filter(l => l.qualificacio).length;
+
+  const grups = ordre.filter(k => aprop.valors.has(k) && compte[k]).map(k => {
+    const llista = files.filter(l => grupDe(l) === k).sort((a, b) => a.distancia_m - b.distancia_m);
+    const mostra = aprop.oberts.has(k) ? llista : llista.slice(0, 8);
+    return `<section class="grup-aprop">
+      <h4><span class="punt" style="${estilPunt(k)}"></span>${etiquetaGrup(k)} <span class="meta">${llista.length}</span></h4>
+      <ul>${mostra.map(l => `<li><button type="button" data-id="${l.id}">
+        <span><b>${esc(l.nom)}</b><br><span class="meta">${esc(cap(l.categoria))}${l.n ? ` · ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}` : ""}</span></span>
+        <span class="dist">${fmtDist(l.distancia_m)}</span></button></li>`).join("")}</ul>
+      ${llista.length > mostra.length ? `<button class="mes" type="button" data-obre="${k}">Mostra'ls tots (${llista.length})</button>` : ""}
+    </section>`;
+  }).join("");
+
+  let buit = "";
+  if (!carregant && !grups) {
+    if (!files.length) buit = `<div class="missatge">No hi ha cap establiment carregat dins d'aquest radi. La prova pilot cobreix Girona.</div>`;
+    else if (!qualificats && !aprop.valors.has(SENSE)) buit = `<div class="missatge">Cap dels ${files.length} establiments d'aquesta zona no té encara prou valoracions (${MINIM}) per tenir qualificació. Marca «Sense prou valoracions» per veure'ls i ajudar a valorar-los.</div>`;
+    else buit = `<div class="missatge">Cap establiment amb les qualificacions marcades. Activa'n d'altres a dalt.</div>`;
+  }
+
+  panell.innerHTML = `
+    <div class="cap"><div>
+      <h2>A prop teu</h2>
+      <div class="meta">${aprop.origen === "ubicacio" ? "A l'entorn de la teva ubicació" : "A l'entorn del centre del mapa"}</div>
+    </div><button class="tancar" aria-label="Tanca la cerca a prop" id="tanca">×</button></div>
+    <div class="controls-aprop">
+      <div class="fila">
+        <label class="meta">Radi <select id="sel-radi">${RADIS.map(r => `<option value="${r}" ${r === aprop.radi ? "selected" : ""}>${fmtDist(r)}</option>`).join("")}</select></label>
+        <label class="meta">Sector <select id="sel-sector"><option value="">Tots</option>${
+          (SECTORS || []).map(s => `<option value="${esc(s.categoria)}" ${s.categoria === aprop.categoria ? "selected" : ""}>${esc(cap(s.categoria))}</option>`).join("")
+        }</select></label>
+      </div>
+      <div class="xips" role="group" aria-label="Qualificacions a mostrar">${
+        ordre.map(k => `<button type="button" data-valor="${k}" aria-pressed="${aprop.valors.has(k)}">
+          <span class="punt" style="${estilPunt(k)}"></span>${etiquetaGrup(k)} <span class="compte">${carregant ? "" : (compte[k] || 0)}</span></button>`).join("")
+      }</div>
+      <div class="fila"><button class="mes" type="button" id="recentra">${aprop.origen === "ubicacio" ? "Cerca al centre del mapa" : "Torna a la meva ubicació"}</button></div>
+    </div>
+    ${carregant ? `<p class="meta">Carregant…</p>` : `<p class="meta" style="margin:0">${files.length} establiments dins de ${fmtDist(aprop.radi)} · ${qualificats} amb qualificació</p>`}
+    ${buit}${grups}
+    <p class="nota">Les qualificacions es refereixen només al respecte als drets lingüístics, no a la qualitat del producte o del servei.</p>`;
+
+  document.getElementById("tanca").onclick = desactivaAprop;
+  document.getElementById("sel-radi").onchange = e => { aprop.radi = +e.target.value; carregaAprop({ encaixa: true }); };
+  document.getElementById("sel-sector").onchange = e => { aprop.categoria = e.target.value; carregaAprop(); };
+  document.getElementById("recentra").onclick = () => {
+    if (aprop.origen === "ubicacio") { const c = mapa.getCenter(); activaAprop(c.lat, c.lng, "mapa"); }
+    else localitza();
+  };
+  panell.querySelectorAll(".xips button").forEach(b => b.onclick = () => {
+    const k = +b.dataset.valor;
+    aprop.valors.has(k) ? aprop.valors.delete(k) : aprop.valors.add(k);
+    pintaMarcadorsAprop(); pintaPanellAprop();
+  });
+  panell.querySelectorAll("[data-obre]").forEach(b => b.onclick = () => { aprop.oberts.add(+b.dataset.obre); pintaPanellAprop(); });
+  panell.querySelectorAll(".grup-aprop li button").forEach(b => b.onclick = () => {
+    const l = aprop.files.find(x => x.id === b.dataset.id);
+    if (l) { mapa.panTo([l.lat, l.lon]); obreFitxa(l); }
   });
 }
 
@@ -489,13 +718,15 @@ document.querySelectorAll(".filtres button").forEach(b => b.onclick = () => {
   filtre = b.dataset.filtre;
   document.querySelectorAll(".filtres button").forEach(x => x.setAttribute("aria-pressed", x === b));
   carregaMapa();
+  if (aprop && !seleccionat) pintaPanellAprop();
 });
 
 document.querySelectorAll(".pestanyes button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".pestanyes button").forEach(x => x.setAttribute("aria-selected", x === b));
   const np = b.dataset.vista === "no-presencials";
   main.classList.toggle("no-presencials", np);
-  inici();
+  if (np && aprop) { aprop = null; btnAprop.setAttribute("aria-pressed", "false"); btnAprop.textContent = "📍 A prop meu"; }
+  if (aprop) pintaPanellAprop(); else inici();
   if (np) carregaNoPresencials(); else setTimeout(() => { mapa.invalidateSize(); carregaMapa(); }, 0);
 });
 

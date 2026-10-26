@@ -11,7 +11,7 @@ window.TRACTE_CONFIG = {
   // Sense clau. Capes disponibles: estandard, estandard-gris, topografic, topografic-gris, simplificat, orto…
   mapa: {
     url: "https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/estandard-gris/MON3857NW/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.icgc.cat/" target="_blank" rel="noopener">ICGC</a> (CC BY) · &copy; <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">col·laboradors d\'OpenStreetMap</a>',
+    attribution: '&copy; <a href="https://www.icgc.cat/" target="_blank" rel="noopener">ICGC</a> · &copy; <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
     maxZoom: 19,
   },
 };

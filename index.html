@@ -193,9 +193,12 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
   main.no-presencials .vista-llista { min-height: 40vh; }
   .eines-mapa { top: 10px; left: 10px; right: 10px; }
   aside { min-height: 60vh; }
-  .aproparse { bottom: auto; top: calc(52vh - 44px); top: calc(52svh - 44px); }
+  /* Peu del mapa al mòbil: atribució en una sola línia petita, i els botons flotants per sobre */
+  .leaflet-control-attribution { font-size: 10px; line-height: 1.3; padding: 1px 5px; }
+  .leaflet-bottomright .leaflet-control-zoom { margin-bottom: 22px; }
+  .aproparse { bottom: auto; top: calc(52vh - 112px); top: calc(52svh - 112px); font-size: 12px; padding: 5px 12px; white-space: nowrap; }
   .anar-fitxa {
-    position: absolute; top: calc(52vh - 48px); top: calc(52svh - 48px); left: 12px; z-index: 500; display: block;
+    position: absolute; top: calc(52vh - 68px); top: calc(52svh - 68px); left: 12px; z-index: 500; display: block;
     border: 1px solid var(--line); background: var(--panel); color: var(--ink);
     border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
   }
@@ -424,6 +427,7 @@ L.tileLayer(MAPA.url, {
   maxZoom: MAPA.maxZoom || 19, tileSize: MAPA.tileSize || 256, zoomOffset: MAPA.zoomOffset || 0,
   attribution: MAPA.attribution, crossOrigin: MAPA.crossOrigin || false,
 }).addTo(mapa);
+mapa.attributionControl.setPrefix(false); // el crèdit de Leaflet es mostra al peu del panell
 const capa = L.layerGroup().addTo(mapa);
 
 function estilMarcador(l, actiu) {
@@ -482,7 +486,7 @@ function inici() {
 }
 
 function atribucio() {
-  return `<p class="atribucio">Dades d'establiments: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">col·laboradors d'OpenStreetMap</a> (ODbL) i aportacions dels usuaris.</p>`;
+  return `<p class="atribucio">Dades d'establiments: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">col·laboradors d'OpenStreetMap</a> (ODbL) i aportacions dels usuaris. Mapa de fons: © <a href="https://www.icgc.cat/" target="_blank" rel="noopener">Institut Cartogràfic i Geològic de Catalunya</a> (CC BY), OpenMapTiles i OpenStreetMap. Mapa interactiu: <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>.</p>`;
 }
 
 async function obreFitxa(l) {

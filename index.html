@@ -173,10 +173,29 @@ aside h3 { font: 700 15px/1.3 var(--tipus-text); color: var(--tinta-2); margin: 
 .cara { display: inline-block; flex: none; }
 .ico-28 { display: inline-flex; flex: none; }
 .ico-28 .cara { width: 28px; height: 28px; }
+.m-dividit {
+  display: block; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  background: linear-gradient(90deg, var(--v1) 50%, var(--v6) 50%);
+}
+.m-dividit.actiu { border: 3px solid var(--tinta); }
 .cares .cara { width: clamp(44px, 13vw, 64px); }
 .cara svg { display: block; width: 100%; height: 100%; }
 .etiqueta-gran { display: flex; align-items: center; gap: 12px; font: 800 24px/1 var(--tipus-titol); }
 .etiqueta-gran .cara { width: 52px; height: 52px; }
+.repartiment { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.repartiment li {
+  display: grid; grid-template-columns: 26px 64px 1fr 30px 72px; gap: 8px; align-items: center;
+  font-size: 14px; padding: 3px 6px; border-radius: 10px;
+}
+.repartiment .cara { width: 26px; height: 26px; }
+.repartiment .pista { height: 10px; border-radius: 5px; background: var(--suau); overflow: hidden; }
+.repartiment .pista span { display: block; height: 100%; border-radius: 5px; }
+.repartiment .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.repartiment li.buida { color: var(--tinta-2); }
+.repartiment li.buida .cara { opacity: .4; }
+.repartiment li.central { background: var(--suau); box-shadow: inset 0 0 0 2px var(--tinta); }
+.repartiment li.central .nom { font-weight: 700; }
+.marca-central { font-size: 12px; font-weight: 700; background: var(--tinta); color: var(--fons); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
 .barra { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--linia); }
 .barra span { display: block; height: 100%; }
 .recompte { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; font-size: 13px; color: var(--tinta-2); text-align: center; }
@@ -253,6 +272,21 @@ dialog.info::backdrop { background: rgba(30, 22, 51, .5); }
 .info h2 { font: 800 28px/1.1 var(--tipus-titol); margin: 0 0 12px; letter-spacing: -.015em; }
 .info h3 { font: 700 17px/1.3 var(--tipus-text); margin: 18px 0 6px; }
 .info p, .info li { max-width: 62ch; }
+.preguntes { display: grid; gap: 8px; margin-top: 8px; }
+.pregunta { border: 1px solid var(--linia); border-radius: 14px; background: var(--fons); }
+.pregunta summary {
+  cursor: pointer; list-style: none; padding: 12px 44px 12px 14px; font-weight: 700; position: relative;
+}
+.pregunta summary::-webkit-details-marker { display: none; }
+.pregunta summary::after {
+  content: "+"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; border-radius: 50%; background: var(--groc); color: #1e1633;
+  display: grid; place-items: center; font: 800 18px/1 var(--tipus-titol);
+}
+.pregunta[open] summary::after { content: "−"; }
+.pregunta[open] { background: var(--suau); }
+.pregunta > div { padding: 0 14px 10px; }
+.pregunta p { margin: 0 0 10px; }
 .passos { display: grid; gap: 14px; padding: 0; margin: 14px 0; list-style: none; counter-reset: pas; }
 .passos li { counter-increment: pas; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
 .passos li::before {
@@ -337,6 +371,7 @@ dialog.info::backdrop { background: rgba(30, 22, 51, .5); }
 <footer class="peu">
   <nav aria-label="Informació">
     <button type="button" data-pagina="funciona">Com funciona</button>
+    <button type="button" data-pagina="faq">Preguntes freqüents</button>
     <button type="button" data-pagina="quisom">Qui som</button>
     <button type="button" data-pagina="contacte">Contacte</button>
     <button type="button" data-pagina="legal">Avís legal</button>
@@ -358,6 +393,7 @@ dialog.info::backdrop { background: rgba(30, 22, 51, .5); }
 "use strict";
 
 const CFG = window.TRACTE_CONFIG || {};
+const PARAMS_ENTRADA = new URLSearchParams(location.search); // es llegeixen abans de tocar l'adreça
 const ESCALA_DEFECTE = [
   { valor: 1, etiqueta: "hostil",  descripcio: "Rebuig explícit del català: menyspreu, burla o exigència de canviar de llengua per ser atès." },
   { valor: 2, etiqueta: "negatiu", descripcio: "No m'atenen en català ni l'entenen, i això dificulta o impedeix rebre el servei, sense hostilitat." },
@@ -367,12 +403,21 @@ const ESCALA_DEFECTE = [
   { valor: 6, etiqueta: "idoni",   descripcio: "Català per defecte en l'atenció i també en retolació, documentació i canals (web, tiquets, carta)." },
 ];
 const MINIM = 3;
+const DIV = 7;   // clau de les "opinions dividides"
+const MESOS = 18; // només compten les valoracions d'aquest període
 const MODALITATS = { presencial: "Establiment", servei_public: "Servei públic", no_presencial: "Servei no presencial" };
 const CANALS = { telefon: "Telèfon", web: "Web", app: "App", xat: "Xat", correu: "Correu", altres: "Altres" };
 const color = v => `var(--v${v})`;
 const cssColor = v => getComputedStyle(document.documentElement).getPropertyValue(`--v${v}`).trim();
 // Cares de l'escala (dibuix propi). v = 1…6; v = 0 per a "sense prou valoracions".
 function cara(v, etiqueta) {
+  if (v === DIV) {
+    const st = `stroke="#ffffff" stroke-width="4.2" stroke-linecap="round" fill="none"`;
+    return `<span class="cara"${etiqueta ? ` role="img" aria-label="${etiqueta}"` : ` aria-hidden="true"`}><svg viewBox="0 0 64 64">
+      <path d="M32 3a29 29 0 0 0 0 58z" fill="var(--v1)"/><path d="M32 3a29 29 0 0 1 0 58z" fill="var(--v6)"/>
+      <circle cx="22" cy="27" r="4.3" fill="#fff"/><circle cx="42" cy="27" r="4.3" fill="#fff"/>
+      <path d="M19 44q6.5-7 13 0t13 0" ${st}/></svg></span>`;
+  }
   const clar = v === 1 || v === 6;                 // fons fosc → trets clars
   const t = v === 0 ? "var(--pocs)" : (clar ? "#ffffff" : "#1e1633");
   const st = `stroke="${t}" stroke-width="4.2" stroke-linecap="round" fill="none"`;
@@ -434,6 +479,7 @@ function apiSupabase() {
       if (error) err(error); return data;
     },
     async sectors() { const { data, error } = await sb.rpc("sectors"); if (error) return []; return data; },
+    async perId(id) { const { data, error } = await sb.rpc("lloc_per_id", { p_id: id }); if (error) return null; return data?.[0] || null; },
     async tancat(id) { const { data, error } = await sb.rpc("informa_tancat", { p_lloc: id, p_dispositiu: dispositiu() }); if (error) err(error); return data; },
     async proposa(l) {
       const { data, error } = await sb.rpc("proposa_lloc", {
@@ -459,6 +505,7 @@ function apiDemo() {
     ["CAP de demostració", "servei_public", "salut pública", -0.0004, -0.0034, [0,1,4,2,1,0]],
     ["Oficina municipal (exemple)", "servei_public", "administració", 0.0016, -0.0040, [0,0,0,1,6,4]],
     ["Comissaria fictícia", "servei_public", "seguretat i justícia", -0.0035, -0.0008, [1,1,2,0,0,0]],
+    ["Cafeteria d'exemple", "presencial", "restauració", 0.0024, 0.0019, [4,1,0,0,1,3]],
   ];
   const llocs = mostra.map(([nom, modalitat, categoria, dla, dlo, dist], i) => ({
     id: "demo-" + i, nom, modalitat, categoria, canal: null, municipi: "Girona", adreca: "Carrer fictici, " + (i + 1),
@@ -472,9 +519,12 @@ function apiDemo() {
   const meves = {};
   const resum = l => {
     const n = l.dist.reduce((a, b) => a + b, 0);
-    const mitjana = n ? l.dist.reduce((a, c, i) => a + c * (i + 1), 0) / n : null;
-    return { ...l, n, distribucio: l.dist, mitjana: n >= MINIM ? mitjana : null,
-      predominant: n >= MINIM ? ESCALA_DEFECTE[Math.round(mitjana) - 1].etiqueta : null };
+    const vals = l.dist.flatMap((c, i) => Array(c).fill(i + 1));
+    const mediana = n ? Math.round((vals[Math.floor((n - 1) / 2)] + vals[Math.ceil((n - 1) / 2)]) / 2 + 1e-9) : null;
+    const baixes = n ? (l.dist[0] + l.dist[1]) / n : 0, altes = n ? (l.dist[4] + l.dist[5]) / n : 0;
+    return { ...l, n, distribucio: l.dist, qualificacio: n >= MINIM ? mediana : null,
+      dividit: n >= 5 && baixes >= 0.25 && altes >= 0.25,
+      predominant: n >= MINIM ? ESCALA_DEFECTE[mediana - 1].etiqueta : null };
   };
   const norm = s => (s || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   return {
@@ -495,13 +545,14 @@ function apiDemo() {
       return llocs.filter(l => l.lat != null && (!p.categoria || l.categoria === p.categoria))
         .map(l => ({ ...resum(l), distancia_m: Math.round(distanciaM(p.lat, p.lon, l.lat, l.lon)) }))
         .filter(l => l.distancia_m <= p.radi)
-        .map(l => ({ ...l, qualificacio: l.mitjana ? Math.round(l.mitjana) : null }));
+        ;
     },
     async sectors() {
       const c = {}; llocs.filter(l => l.lat != null).forEach(l => c[l.categoria] = (c[l.categoria] || 0) + 1);
       return Object.entries(c).map(([categoria, n]) => ({ categoria, n })).sort((a, b) => b.n - a.n);
     },
     async tancat(id) { return { ok: true, desactivat: false }; },
+    async perId(id) { const l = llocs.find(x => x.id === id); return l ? resum(l) : null; },
     async proposa(n) {
       const dup = llocs.find(l => l.modalitat === n.modalitat && norm(l.nom) === norm(n.nom));
       if (dup) return { id: dup.id, existent: true, nom: dup.nom };
@@ -543,8 +594,24 @@ L.tileLayer(MAPA.url, {
 mapa.attributionControl.setPrefix(false); // el crèdit de Leaflet es mostra al peu del panell
 const capa = L.layerGroup().addTo(mapa);
 
+// Marcador del mapa: punt de color per a la qualificació; punt partit per a les opinions dividides
+function creaMarcador(l) {
+  const actiu = seleccionat?.id === l.id;
+  const m = l.dividit
+    ? L.marker([l.lat, l.lon], { icon: iconaDividit(actiu), keyboard: false })
+    : L.circleMarker([l.lat, l.lon], estilMarcador(l, actiu));
+  return m.bindTooltip(esc(l.nom), { direction: "top", offset: [0, -6] }).on("click", () => obreFitxa(l));
+}
+function iconaDividit(actiu) {
+  const r = actiu ? 22 : 18;
+  return L.divIcon({ className: "", iconSize: [r, r], iconAnchor: [r / 2, r / 2],
+    html: `<span class="m-dividit${actiu ? " actiu" : ""}" style="width:${r}px;height:${r}px"></span>` });
+}
+function marcaSeleccio(m, l, actiu) {
+  if (l.dividit) m.setIcon(iconaDividit(actiu)); else m.setStyle(estilMarcador(l, actiu));
+}
 function estilMarcador(l, actiu) {
-  const v = l.mitjana ? Math.round(l.mitjana) : null;
+  const v = l.qualificacio || null;
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   return {
     radius: actiu ? 11 : (v ? 8 : 6),
@@ -567,9 +634,7 @@ async function carregaMapa() {
     capa.clearLayers(); marcadors.clear();
     const visibles = files.filter(l => l.lat != null && l.modalitat !== "no_presencial");
     for (const l of visibles) {
-      const m = L.circleMarker([l.lat, l.lon], estilMarcador(l, seleccionat?.id === l.id))
-        .bindTooltip(esc(l.nom), { direction: "top", offset: [0, -6] })
-        .on("click", () => obreFitxa(l));
+      const m = creaMarcador(l);
       m.addTo(capa); marcadors.set(l.id, { m, l });
     }
     document.getElementById("aproparse").style.display = files.length >= 400 ? "block" : "none";
@@ -578,22 +643,35 @@ async function carregaMapa() {
 mapa.on("moveend", carregaMapa);
 
 // ---------- panell ----------
-function barra(dist, n) {
-  if (!n) return `<div class="barra" aria-hidden="true"></div>`;
-  return `<div class="barra" role="img" aria-label="Distribució de ${n} valoracions">${
-    dist.map((c, i) => c ? `<span style="width:${(c / n) * 100}%;background:${color(i + 1)}" title="${ESCALA[i].etiqueta}: ${c}"></span>` : "").join("")
-  }</div><div class="recompte">${dist.map((c, i) => `<span title="${ESCALA[i].etiqueta}">${c}</span>`).join("")}</div>`;
+// Repartiment de les valoracions: una fila per cara, amb el nombre de valoracions,
+// i la fila de la cara central (la mediana) destacada.
+function repartiment(l) {
+  if (!l.n) return "";
+  const max = Math.max(...l.distribucio);
+  const files = [6, 5, 4, 3, 2, 1].map(v => {
+    const c = l.distribucio[v - 1];
+    const central = !l.dividit && l.qualificacio === v;
+    return `<li class="${central ? "central" : ""}${c ? "" : " buida"}">
+      ${cara(v)}<span class="nom">${cap(ESCALA[v - 1].etiqueta)}</span>
+      <span class="pista"><span style="width:${max ? (c / max) * 100 : 0}%;background:${color(v)}"></span></span>
+      <span class="num">${c}</span>
+      ${central ? `<span class="marca-central">la del mig</span>` : ""}
+    </li>`;
+  }).join("");
+  return `<ul class="repartiment" aria-label="Repartiment de les ${l.n} valoracions">${files}</ul>`;
 }
 
 function inici() {
   seleccionat = null;
+  posaUrl(null);
   panell.innerHTML = `
     <div><h2>Toca un punt del mapa</h2>
       <p class="meta" style="margin:8px 0 0">Veuràs com hi tracten el català i podràs dir com t'ha anat a tu. Només cal triar una d'aquestes sis cares.</p></div>
     <ul class="escala-llegenda">${
       ESCALA.map(e => `<li>${cara(e.valor)}<span><b>${cap(e.etiqueta)}</b><span class="meta">${esc(e.descripcio)}</span></span></li>`).join("")
     }</ul>
-    <p class="nota">Els punts buits encara no tenen prou valoracions: en calen ${MINIM} perquè surti la cara.</p>
+    <ul class="escala-llegenda"><li>${cara(DIV)}<span><b>Opinions dividides</b><span class="meta">Hi ha moltes valoracions als dos extrems: sembla que depèn de qui t'atén.</span></span></li></ul>
+    <p class="nota">Els punts buits encara no tenen prou valoracions: en calen ${MINIM} dels darrers ${MESOS} mesos perquè surti la cara.</p>
     <p class="nota">Valorar és anònim. No et demanem cap dada.</p>
     ${atribucio()}`;
 }
@@ -602,16 +680,21 @@ function atribucio() {
   return `<p class="atribucio">Dades d'establiments: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">col·laboradors d'OpenStreetMap</a> (ODbL) i aportacions dels usuaris. Mapa de fons: © <a href="https://www.icgc.cat/" target="_blank" rel="noopener">Institut Cartogràfic i Geològic de Catalunya</a> (CC BY), OpenMapTiles i OpenStreetMap. Mapa interactiu: <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>.</p>`;
 }
 
+// Enllaç directe a cada fitxa: ?lloc=<id>
+function urlLloc(id) { const u = new URL(location.href); u.search = ""; u.hash = ""; if (id) u.searchParams.set("lloc", id); return u.toString(); }
+function posaUrl(id) { try { history.replaceState(null, "", urlLloc(id)); } catch {} }
+
 async function obreFitxa(l) {
   seleccionat = l;
-  for (const { m, l: x } of marcadors.values()) m.setStyle(estilMarcador(x, x.id === l.id));
+  posaUrl(l.id);
+  for (const { m, l: x } of marcadors.values()) marcaSeleccio(m, x, x.id === l.id);
   const meva = await api.laMeva(l.id);
   pintaFitxa(l, meva);
   if (matchMedia("(max-width: 820px)").matches) panell.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function pintaFitxa(l, meva, missatge) {
-  const v = l.mitjana ? Math.round(l.mitjana) : null;
+  const v = l.qualificacio || null;
   const on = l.modalitat === "no_presencial" ? (CANALS[l.canal] || "") : [l.adreca, l.municipi].filter(Boolean).join(" · ");
   panell.innerHTML = `
     <div class="cap"><div>
@@ -620,10 +703,14 @@ function pintaFitxa(l, meva, missatge) {
     </div><button class="tancar" aria-label="Tanca" id="tanca">×</button></div>
     <div>
       <h3>Tracte lingüístic</h3>
-      ${v ? `<div class="etiqueta-gran">${cara(v)}${cap(ESCALA[v - 1].etiqueta)}</div>
-             <div class="meta" style="margin:2px 0 10px">Mitjana de ${l.n} valoracions</div>`
-          : `<div class="meta" style="margin-bottom:10px">${l.n ? `Només ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}: calen almenys ${MINIM} per mostrar-ne la qualificació.` : "Encara no té valoracions."}</div>`}
-      ${barra(l.distribucio, l.n)}
+      ${l.dividit
+          ? `<div class="etiqueta-gran">${cara(DIV)}Opinions dividides</div>
+             <p class="meta" style="margin:8px 0 10px">Les valoracions es reparteixen entre els dos extrems: sembla que depèn de qui t'atén. Mira el repartiment.</p>`
+          : v ? `<div class="etiqueta-gran">${cara(v)}${cap(ESCALA[v - 1].etiqueta)}</div>
+             <div class="meta" style="margin:6px 0 10px">És la cara central de ${l.n} valoracions dels darrers ${MESOS} mesos.</div>`
+          : `<div class="meta" style="margin-bottom:10px">${l.n ? `Només ${l.n} valoraci${l.n === 1 ? "ó" : "ons"} dels darrers ${MESOS} mesos: en calen almenys ${MINIM} perquè surti la cara.` : `Encara no té valoracions dels darrers ${MESOS} mesos.`}</div>`}
+      ${repartiment(l)}
+      ${l.n ? `<button class="mes" type="button" data-faq="calcul" style="margin-top:6px">Com es calcula aquesta cara?</button>` : ""}
     </div>
     <div>
       <h3>${meva ? "La teva valoració" : "Com t'han tractat?"}</h3>
@@ -636,10 +723,22 @@ function pintaFitxa(l, meva, missatge) {
     </div>
     <p class="nota">Aquesta valoració es refereix només al respecte als drets lingüístics, no a la qualitat del producte o del servei.</p>
     <div id="zona-tancat">
+      <button class="btn" type="button" id="btn-comparteix" style="margin-bottom:10px">Comparteix aquest lloc</button><br>
       <button class="mes" type="button" id="btn-tancat">${l.modalitat === "no_presencial" ? "Aquest servei ja no existeix" : "Aquest lloc ha tancat o no existeix"}</button>
     </div>
     ${l.font === "osm" ? atribucio() : ""}`;
 
+  panell.querySelectorAll("[data-faq]").forEach(b => b.onclick = () => obrePagina("faq", b.dataset.faq));
+  document.getElementById("btn-comparteix").onclick = async () => {
+    const url = urlLloc(l.id);
+    const text = l.dividit ? `${l.nom}: opinions dividides sobre el tracte al català`
+      : l.qualificacio ? `${l.nom}: tracte al català «${ESCALA[l.qualificacio - 1].etiqueta}»` : `${l.nom} a Tracte lingüístic`;
+    try {
+      if (navigator.share) { await navigator.share({ title: "Tracte lingüístic", text, url }); return; }
+      await navigator.clipboard.writeText(url);
+      document.getElementById("btn-comparteix").textContent = "Enllaç copiat";
+    } catch (e) { if (e?.name !== "AbortError") prompt("Copia aquest enllaç:", url); }
+  };
   document.getElementById("btn-tancat").onclick = () => {
     const zona = document.getElementById("zona-tancat");
     zona.innerHTML = `<div class="missatge">
@@ -724,7 +823,7 @@ function activaAprop(lat, lon, origen) {
     lat, lon, origen,
     radi: ant?.radi || 500,
     categoria: ant?.categoria || "",
-    valors: ant?.valors || new Set([1, 2, 3, 4, 5, 6]),
+    valors: ant?.valors || new Set([1, 2, 3, 4, 5, 6, DIV]),
     oberts: new Set(),
     files: [],
   };
@@ -750,7 +849,7 @@ async function carregaAprop({ panell: ambPanell = true, encaixa = false } = {}) 
       SECTORS ? null : api.sectors().then(s => SECTORS = s),
     ]);
     if (!aprop) return;
-    aprop.files = files.map(l => ({ ...l, qualificacio: l.qualificacio ?? (l.mitjana ? Math.round(l.mitjana) : null) }));
+    aprop.files = files;
     if (encaixa) mapa.fitBounds(L.latLng(aprop.lat, aprop.lon).toBounds(aprop.radi * 2), { padding: [20, 20] });
     pintaMarcadorsAprop();
     if (ambPanell) pintaPanellAprop();
@@ -761,7 +860,7 @@ async function carregaAprop({ panell: ambPanell = true, encaixa = false } = {}) 
 
 // files visibles segons el filtre de modalitat (Tots / Establiments / Serveis públics)
 const filesAprop = () => aprop.files.filter(l => !filtre || l.modalitat === filtre);
-const grupDe = l => l.qualificacio || SENSE;
+const grupDe = l => l.dividit ? DIV : (l.qualificacio || SENSE);
 
 function pintaMarcadorsAprop() {
   capa.clearLayers(); marcadors.clear();
@@ -771,9 +870,7 @@ function pintaMarcadorsAprop() {
     .bindTooltip(aprop.origen === "ubicacio" ? "Ets aquí" : "Centre de la cerca").addTo(capa);
   for (const l of filesAprop()) {
     if (!aprop.valors.has(grupDe(l))) continue;
-    const m = L.circleMarker([l.lat, l.lon], estilMarcador(l, seleccionat?.id === l.id))
-      .bindTooltip(esc(l.nom), { direction: "top", offset: [0, -6] })
-      .on("click", () => obreFitxa(l));
+    const m = creaMarcador(l);
     m.addTo(capa); marcadors.set(l.id, { m, l });
   }
   document.getElementById("aproparse").style.display = "none";
@@ -782,11 +879,12 @@ function pintaMarcadorsAprop() {
 function pintaPanellAprop(carregant) {
   if (!aprop) return;
   seleccionat = null;
-  for (const { m, l } of marcadors.values()) m.setStyle(estilMarcador(l, false));
+  posaUrl(null);
+  for (const { m, l } of marcadors.values()) marcaSeleccio(m, l, false);
   const files = carregant ? [] : filesAprop();
   const compte = {}; files.forEach(l => compte[grupDe(l)] = (compte[grupDe(l)] || 0) + 1);
-  const ordre = [6, 5, 4, 3, 2, 1, SENSE];
-  const etiquetaGrup = k => k === SENSE ? "Sense prou valoracions" : cap(ESCALA[k - 1].etiqueta);
+  const ordre = [6, 5, 4, 3, 2, 1, DIV, SENSE];
+  const etiquetaGrup = k => k === SENSE ? "Sense prou valoracions" : k === DIV ? "Opinions dividides" : cap(ESCALA[k - 1].etiqueta);
   const qualificats = files.filter(l => l.qualificacio).length;
 
   const grups = ordre.filter(k => aprop.valors.has(k) && compte[k]).map(k => {
@@ -860,7 +958,7 @@ cerca.addEventListener("input", () => {
   temps = setTimeout(async () => {
     const files = (await api.cerca({ text: t, limit: 12 })).filter(l => l.modalitat !== "no_presencial");
     resultats.innerHTML = files.length ? files.map((l, i) => `
-      <button data-i="${i}" role="option">${l.mitjana ? `<span class="ico-28">${cara(Math.round(l.mitjana))}</span>` : `<span class="punt"></span>`}
+      <button data-i="${i}" role="option">${l.dividit ? `<span class="ico-28">${cara(DIV)}</span>` : l.qualificacio ? `<span class="ico-28">${cara(l.qualificacio)}</span>` : `<span class="punt"></span>`}
         <span><b>${esc(l.nom)}</b><br><span class="meta">${esc(cap(l.categoria))}${l.adreca ? " · " + esc(l.adreca) : ""}</span></span></button>`).join("")
       : `<div class="meta" style="padding:12px 14px">Cap resultat. Pots afegir-lo amb «Afegeix un lloc».</div>`;
     resultats.classList.add("obert");
@@ -895,7 +993,7 @@ async function carregaNoPresencials() {
   const t = document.getElementById("cerca-np").value.trim();
   const files = await api.cerca({ text: t || null, modalitat: "no_presencial", limit: 200 });
   document.getElementById("llista-np").innerHTML = files.length ? files.map((l, i) => `
-    <button class="item-llista" data-i="${i}">${l.mitjana ? `<span class="ico-28">${cara(Math.round(l.mitjana))}</span>` : `<span class="punt"></span>`}
+    <button class="item-llista" data-i="${i}">${l.dividit ? `<span class="ico-28">${cara(DIV)}</span>` : l.qualificacio ? `<span class="ico-28">${cara(l.qualificacio)}</span>` : `<span class="punt"></span>`}
       <span><b>${esc(l.nom)}</b><br><span class="meta">${CANALS[l.canal] || ""} · ${esc(cap(l.categoria))} · ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}</span></span></button>`).join("")
     : `<p class="meta">Encara no hi ha cap servei. Afegeix-ne un amb «Afegeix un lloc».</p>`;
   document.querySelectorAll("#llista-np .item-llista").forEach(b => b.onclick = () => obreFitxa(files[b.dataset.i]));
@@ -1009,10 +1107,59 @@ const PAGINES = {
     </ol>
     <h3>Què vol dir cada cara</h3>
     <ul class="escala-llegenda">${ESCALA.map(e => `<li>${cara(e.valor)}<span><b>${cap(e.etiqueta)}</b><span class="meta">${esc(e.descripcio)}</span></span></li>`).join("")}</ul>
+    <h3>Com es calcula la cara de cada lloc</h3>
+    <p>Ordenem totes les valoracions dels darrers ${MESOS} mesos i agafem la del mig (la mediana). Així unes poques valoracions extremes no canvien el resultat. Les valoracions més antigues es conserven, però deixen de comptar: si un lloc canvia, la cara ho reflecteix.</p>
+    <p>Quan moltes valoracions són als dos extrems alhora, en lloc d'una cara mostrem «Opinions dividides» <span class="ico-28" style="vertical-align:middle">${cara(DIV)}</span>: vol dir que depèn de qui t'atén.</p>
     <h3>Què no valorem</h3>
     <p>Ni la qualitat, ni el preu, ni l'atenció en general: només el respecte als drets lingüístics. Per això no hi ha comentaris, només les sis cares.</p>
+    <p><button class="mes" type="button" data-pagina="faq">Més preguntes i respostes</button></p>
     <h3>Si un lloc ha tancat</h3>
     <p>A la fitxa del lloc hi ha l'opció «Aquest lloc ha tancat o no existeix». Quan ho confirmen diverses persones, es retira del mapa.</p>`,
+  faq: () => {
+    const p = (id, q, r) => `<details class="pregunta" id="faq-${id}"><summary>${q}</summary><div>${r}</div></details>`;
+    return `<h2 id="info-titol">Preguntes freqüents</h2>
+    <div class="preguntes">
+    ${p("que", "Què valorem exactament?",
+      `<p>Només com et tracten quan parles en català: si t'entenen, si et responen en català, si et demanen que canviïs de llengua… No valorem la qualitat, el preu ni l'atenció en general.</p>`)}
+    ${p("comentaris", "Per què no puc escriure un comentari?",
+      `<p>Perquè volem que només es parli del tracte lingüístic, i que ningú no pugui fer servir l'eina per desqualificar un negoci o una persona per altres motius. Les sis cares ja diuen el que cal.</p>`)}
+    ${p("calcul", "Com es calcula la cara d'un lloc?",
+      `<p>Posem en fila totes les valoracions dels darrers ${MESOS} mesos, de la més negativa a la més positiva, i agafem la que queda al mig. És el que s'anomena <b>mediana</b>.</p>
+       <p>Per exemple, si un bar té aquestes 7 valoracions: neutre, amable, positiu, positiu, positiu, idoni, idoni, la del mig és la quarta, «positiu». Aquesta és la cara que surt.</p>
+       <p>Si el nombre de valoracions és parell i les dues del mig són cares diferents, prenem la que queda entremig; si cau just a la meitat de dues cares, triem la més favorable al lloc. Per exemple, entre «neutre» i «positiu» surt «amable», i entre «amable» i «positiu» surt «positiu».</p>
+       <p>A la fitxa de cada lloc hi veuràs quantes valoracions té cada cara, amb la del mig remarcada.</p>`)}
+    ${p("mitjana", "Per què la mediana i no la mitjana?",
+      `<p>La mitjana es deixa arrossegar per uns quants vots extrems i pot donar una cara que no ha triat ningú. Si 100 persones diuen «hostil» i 100 diuen «idoni», la mitjana seria «amable», que no explica gens el que passa.</p>
+       <p>La mediana és més estable: unes poques valoracions exagerades, o fetes per perjudicar o afavorir un lloc, amb prou feines la mouen.</p>`)}
+    ${p("dividides", "Què vol dir «opinions dividides»?",
+      `<p>Que hi ha moltes valoracions als dos extrems alhora: almenys una quarta part entre «hostil» i «negatiu» i almenys una quarta part entre «positiu» i «idoni». Ho mostrem a partir de 5 valoracions.</p>
+       <p>Sol passar quan depèn de qui t'atén. En aquests casos no posem cap cara, perquè qualsevol simplificaria massa, i et convidem a mirar el repartiment.</p>`)}
+    ${p("sensecara", "Per què un lloc no té cara?",
+      `<p>Perquè encara no té prou valoracions recents. En calen almenys ${MINIM} dels darrers ${MESOS} mesos. Fins aleshores, al mapa surt com un punt buit. Si hi has estat, la teva valoració ajuda que en tingui.</p>`)}
+    ${p("antigues", "Per què les valoracions antigues deixen de comptar?",
+      `<p>Perquè els llocs canvien: de propietaris, de personal, de manera de fer. Comptant només els darrers ${MESOS} mesos, la cara reflecteix com és el lloc ara. Les valoracions antigues no s'esborren, però ja no compten per a la cara.</p>`)}
+    ${p("canviar", "Puc canviar la meva valoració?",
+      `<p>Sí. Torna a la fitxa del lloc des del mateix mòbil o ordinador i tria una altra cara. Compta com a valoració nova a partir d'aquell dia.</p>`)}
+    ${p("repetir", "Puc valorar el mateix lloc diverses vegades?",
+      `<p>No. Cada dispositiu té una sola valoració per lloc, que pots canviar. També hi ha límits diaris de valoracions per evitar que algú intenti inflar o enfonsar un lloc.</p>`)}
+    ${p("anonim", "És anònim? Què sabeu de mi?",
+      `<p>Sí. No et demanem cap dada: ni nom, ni correu, ni compte. Només desem una empremta xifrada del dispositiu i de la connexió, que no permet saber qui ets i que serveix per aplicar els límits. La teva ubicació només s'utilitza per buscar llocs a prop i no es desa.</p>
+       <p><button class="mes" type="button" data-pagina="privacitat">Llegeix la política de privacitat</button></p>`)}
+    ${p("noesta", "El lloc que busco no hi és, o ha tancat",
+      `<p>Si no hi és, prem «Afegeix un lloc», escriu-ne el nom i marca'l al mapa. Si ja n'hi ha un de molt semblant a prop, t'hi portarem.</p>
+       <p>Si ha tancat, a la seva fitxa hi ha l'opció «Aquest lloc ha tancat o no existeix». Quan ho confirmen diverses persones, es retira del mapa.</p>`)}
+    ${p("establiment", "Tinc un establiment i no hi estic d'acord",
+      `<p>Les valoracions recullen l'experiència de les persones usuàries i no les podem modificar a petició. Si creus que hi ha un error o un abús, escriu-nos des de l'apartat de contacte i ho revisarem.</p>
+       <p>I si vols millorar la teva cara, la millor manera és que l'atenció en català sigui la normal al teu establiment: les valoracions noves acaben pesant més que les antigues.</p>`)}
+    ${p("dades", "D'on surten els establiments?",
+      `<p>De la base de dades lliure OpenStreetMap, que fa i manté la gent, i dels llocs que afegeixen les persones usuàries. Per això en pot faltar algun o n'hi pot haver algun de tancat.</p>`)}
+    ${p("public", "Per què també hi ha serveis públics?",
+      `<p>Perquè els drets lingüístics també valen davant de l'administració: ajuntaments, centres de salut, oficines… i, a la pestanya «Per telèfon i internet», les línies d'atenció, les webs i les aplicacions.</p>`)}
+    ${p("qui", "Qui hi ha al darrere? Qui ho paga?",
+      `<p>Una fundació cultural, sense ànim de lucre. El servei és gratuït, no té publicitat i no comercialitza cap dada.</p>
+       <p><button class="mes" type="button" data-pagina="quisom">Qui som</button></p>`)}
+    </div>`;
+  },
   quisom: () => `<h2 id="info-titol">Qui som</h2>
     <p>Tracte lingüístic és un servei gratuït${nomEditor ? ` de ${nomEditor}` : ", editat per una fundació cultural"}. No té publicitat i no comercialitza cap dada.</p>
     <p>Vol ajudar a saber on es respecten els drets lingüístics dels catalanoparlants, a partir de l'experiència de les persones usuàries.</p>
@@ -1040,13 +1187,95 @@ const PAGINES = {
     ${nomEditor ? `<p>Responsable: ${nomEditor}.${ED.correu ? ` Per exercir els teus drets, escriu a <a href="mailto:${esc(ED.correu)}">${esc(ED.correu)}</a>.` : ""}</p>` : ""}`,
 };
 const finestra = document.getElementById("finestra-info");
-document.querySelectorAll("[data-pagina]").forEach(b => b.onclick = () => {
-  document.getElementById("info-contingut").innerHTML =
-    `<div class="cap" style="justify-content:flex-end"><button class="tancar" type="button" aria-label="Tanca" id="tanca-info">×</button></div>` + PAGINES[b.dataset.pagina]();
+function obrePagina(nom, pregunta) {
+  const cont = document.getElementById("info-contingut");
+  cont.innerHTML =
+    `<div class="cap" style="justify-content:flex-end"><button class="tancar" type="button" aria-label="Tanca" id="tanca-info">×</button></div>` + PAGINES[nom]();
   document.getElementById("tanca-info").onclick = () => finestra.close();
+  cont.querySelectorAll("[data-pagina]").forEach(b => b.onclick = () => obrePagina(b.dataset.pagina));
   finestra.showModal();
-});
+  cont.scrollTop = 0;
+  if (pregunta) {
+    const d = document.getElementById("faq-" + pregunta);
+    if (d) { d.open = true; d.scrollIntoView({ block: "start" }); }
+  }
+}
+window.__obrePagina = obrePagina;
+document.querySelectorAll(".peu [data-pagina]").forEach(b => b.onclick = () => obrePagina(b.dataset.pagina));
 finestra.addEventListener("click", e => { if (e.target === finestra) finestra.close(); });
+
+// ---------- enllaços directes i contingut compartit des d'altres apps ----------
+// Google Maps (i altres apps) envien, en compartir un lloc, el nom, l'adreça i un enllaç.
+function llegeixCompartit(params) {
+  const tot = ["title", "text", "url"].map(k => params.get(k) || "").join("\n");
+  // coordenades, si l'enllaç les porta (els enllaços curts de Maps no les porten)
+  let coords = null;
+  const m = tot.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/) || tot.match(/[?&](?:q|query|ll|center)=(-?\d{1,2}\.\d+)(?:,|%2C)(-?\d{1,3}\.\d+)/i);
+  if (m) coords = [parseFloat(m[1]), parseFloat(m[2])];
+  // un enllaç a una fitxa nostra
+  const propi = tot.match(/[?&]lloc=([0-9a-f-]{36})/i);
+  // el nom: la primera línia que no sigui un enllaç
+  const linies = tot.split(/\n+/).map(x => x.trim()).filter(x => x && !/^https?:\/\//i.test(x));
+  let nom = (linies[0] || "").replace(/https?:\/\/\S+/g, "").replace(/^["«“]|["»”]$/g, "").trim();
+  if (nom.length > 80) nom = nom.slice(0, 80);
+  return { nom, coords, propi: propi?.[1] || null, adreca: linies[1] || null };
+}
+
+async function gestionaEntrada() {
+  const params = PARAMS_ENTRADA;
+  const id = params.get("lloc");
+  const compartit = params.has("text") || params.has("title") || params.has("url");
+  if (!id && !compartit) return;
+  const info = compartit ? llegeixCompartit(params) : { propi: id };
+  if (info.propi) {
+    const l = await api.perId(info.propi);
+    if (l) {
+      if (l.lat != null) mapa.setView([l.lat, l.lon], 18);
+      else document.querySelector('.pestanyes [data-vista="no-presencials"]').click();
+      setTimeout(() => { anarAlMapa(); obreFitxa(l); }, 50);
+      return;
+    }
+    if (!compartit) { posaUrl(null); return; }
+  }
+  posaUrl(null);
+  if (!info.nom) {
+    anarAlMapa();
+    panell.innerHTML = `<div class="missatge">No hem pogut llegir el nom del lloc que has compartit. Cerca'l pel nom al cercador del mapa.</div>`;
+    return;
+  }
+  const bbox = info.coords ? [info.coords[0] - 0.004, info.coords[1] - 0.006, info.coords[0] + 0.004, info.coords[1] + 0.006] : null;
+  let files = (await api.cerca({ text: info.nom, bbox, limit: 8 })).filter(l => l.modalitat !== "no_presencial");
+  if (!files.length && bbox) files = (await api.cerca({ text: info.nom, limit: 8 })).filter(l => l.modalitat !== "no_presencial");
+  if (info.coords) files.forEach(l => l._d = distanciaM(info.coords[0], info.coords[1], l.lat, l.lon)), files.sort((a, b) => a._d - b._d);
+  const norm = t => (t || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+  const exacte = files.filter(l => norm(l.nom) === norm(info.nom) && (!info.coords || l._d < 150));
+  anarAlMapa();
+  if (exacte.length === 1) {
+    mapa.setView([exacte[0].lat, exacte[0].lon], 18);
+    obreFitxa(exacte[0]);
+    return;
+  }
+  if (info.coords) mapa.setView(info.coords, 17);
+  panell.innerHTML = `
+    <div class="cap"><div><h2>Has compartit «${esc(info.nom)}»</h2>
+      <p class="meta" style="margin:6px 0 0">${files.length ? "Tria quin d'aquests llocs és:" : "No el tenim registrat."}</p></div>
+      <button class="tancar" aria-label="Tanca" id="tanca">×</button></div>
+    ${files.length ? `<div>${files.map((l, i) => `<button class="item-llista" data-i="${i}">
+        ${l.dividit ? `<span class="ico-28">${cara(DIV)}</span>` : l.qualificacio ? `<span class="ico-28">${cara(l.qualificacio)}</span>` : `<span class="punt"></span>`}
+        <span><b>${esc(l.nom)}</b><br><span class="meta">${esc(cap(l.categoria))}${l.adreca ? " · " + esc(l.adreca) : ""}${l._d != null ? " · " + fmtDist(l._d) : ""}</span></span></button>`).join("")}</div>` : ""}
+    <p class="meta" style="margin:0">${files.length ? "Si no és cap d'aquests, el pots afegir." : "El pots afegir perquè altres persones també el puguin valorar."}</p>
+    <div class="files"><button class="btn primari" type="button" id="afegeix-compartit">Afegeix «${esc(info.nom)}»</button></div>`;
+  document.getElementById("tanca").onclick = inici;
+  panell.querySelectorAll(".item-llista").forEach(b => b.onclick = () => {
+    const l = files[b.dataset.i]; mapa.setView([l.lat, l.lon], 18); obreFitxa(l);
+  });
+  document.getElementById("afegeix-compartit").onclick = () => {
+    formulariAfegir();
+    document.querySelector('#form-nou input[name="nom"]').value = info.nom;
+    if (info.adreca) document.querySelector('#form-nou input[name="adreca"]').value = info.adreca.slice(0, 160);
+    if (info.coords) mapa.fire("click", { latlng: L.latLng(info.coords[0], info.coords[1]) });
+  };
+}
 
 // ---------- arrencada ----------
 (async () => {
@@ -1054,6 +1283,7 @@ finestra.addEventListener("click", e => { if (e.target === finestra) finestra.cl
   try { const e = await api.escala(); if (e?.length === 6) { ESCALA = e; pintaPortada(); } } catch (e) { console.warn(e); }
   inici();
   carregaMapa();
+  gestionaEntrada().catch(e => console.warn(e));
 })();
 })();
 </script>

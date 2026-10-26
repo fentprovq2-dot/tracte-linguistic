@@ -317,6 +317,7 @@ function apiSupabase() {
       if (error) err(error); return data;
     },
     async sectors() { const { data, error } = await sb.rpc("sectors"); if (error) return []; return data; },
+    async tancat(id) { const { data, error } = await sb.rpc("informa_tancat", { p_lloc: id, p_dispositiu: dispositiu() }); if (error) err(error); return data; },
     async proposa(l) {
       const { data, error } = await sb.rpc("proposa_lloc", {
         p_nom: l.nom, p_modalitat: l.modalitat, p_categoria: l.categoria, p_lat: l.lat ?? null, p_lon: l.lon ?? null,
@@ -383,6 +384,7 @@ function apiDemo() {
       const c = {}; llocs.filter(l => l.lat != null).forEach(l => c[l.categoria] = (c[l.categoria] || 0) + 1);
       return Object.entries(c).map(([categoria, n]) => ({ categoria, n })).sort((a, b) => b.n - a.n);
     },
+    async tancat(id) { return { ok: true, desactivat: false }; },
     async proposa(n) {
       const dup = llocs.find(l => l.modalitat === n.modalitat && norm(l.nom) === norm(n.nom));
       if (dup) return { id: dup.id, existent: true, nom: dup.nom };
@@ -507,7 +509,31 @@ function pintaFitxa(l, meva, missatge) {
       ${missatge ? `<div class="missatge ${missatge.error ? "error" : ""}">${esc(missatge.text)}</div>` : ""}
     </div>
     <p class="nota">Aquesta valoració es refereix només al respecte als drets lingüístics, no a la qualitat del producte o del servei.</p>
+    <div id="zona-tancat">
+      <button class="mes" type="button" id="btn-tancat">${l.modalitat === "no_presencial" ? "Aquest servei ja no existeix" : "Aquest lloc ha tancat o no existeix"}</button>
+    </div>
     ${l.font === "osm" ? atribucio() : ""}`;
+
+  document.getElementById("btn-tancat").onclick = () => {
+    const zona = document.getElementById("zona-tancat");
+    zona.innerHTML = `<div class="missatge">
+        <p style="margin:0 0 8px">Confirmes que <b>${esc(l.nom)}</b> ${l.modalitat === "no_presencial" ? "ja no existeix" : "ha tancat o no és en aquest lloc"}?
+        Quan ho confirmin altres usuaris, es retirarà del mapa.</p>
+        <div class="files"><button class="btn primari" type="button" id="si-tancat">Sí, avisa</button><button class="btn" type="button" id="no-tancat">Cancel·la</button></div>
+      </div>`;
+    document.getElementById("no-tancat").onclick = () => pintaFitxa(l, meva);
+    document.getElementById("si-tancat").onclick = async () => {
+      try {
+        const r = await api.tancat(l.id);
+        if (r.desactivat) {
+          zona.innerHTML = `<div class="missatge">Gràcies. Diversos usuaris ho han confirmat i s'ha retirat del mapa.</div>`;
+          if (l.modalitat === "no_presencial") carregaNoPresencials(); else if (aprop) carregaAprop({ panell: false }); else carregaMapa();
+        } else {
+          zona.innerHTML = `<div class="missatge">Gràcies per l'avís. Es retirarà del mapa quan ho confirmin altres usuaris.</div>`;
+        }
+      } catch (e) { zona.innerHTML = `<div class="missatge error">${esc(e.message)}</div>`; }
+    };
+  };
 
   document.getElementById("tanca").onclick = () => aprop ? pintaPanellAprop() : inici();
   if (aprop) {

@@ -5,6 +5,16 @@ window.TRACTE_CONFIG = {
   supabaseUrl: "https://vgqmugrnkrsoynuojoda.supabase.co",
   supabaseKey: "sb_publishable_zqsxq7m-bCwQ1gR9qZLCeA_EGD3E_5b",
   centre: [41.9794, 2.8214], // Girona
+
+  // Entitat editora: apareix a «Qui som», «Contacte», «Avís legal» i «Privacitat».
+  // Mentre els camps siguin buits, aquestes pàgines diuen que la informació arribarà aviat.
+  editor: {
+    nom: "",      // p. ex. "Fundació …"
+    nif: "",
+    adreca: "",
+    correu: "",
+    web: "",
+  },
   zoom: 15,
 
   // Mapa de fons: servei Mapa Base de l'Institut Cartogràfic i Geològic de Catalunya (ICGC).

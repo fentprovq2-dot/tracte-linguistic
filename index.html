@@ -10,231 +10,309 @@
 <link rel="icon" type="image/svg+xml" href="icones/icona.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icones/favicon-32.png">
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
-<meta name="theme-color" content="#8a1c1c">
+<meta name="theme-color" content="#ffc629">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tracte">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
+/* ----------------------------------------------------------------------------
+   Tokens. Groc i granat (els colors de casa, sense banderes); tinta morada fosca;
+   la gamma de l'escala (vermell → verd) és l'únic altre color i té significat.
+   ---------------------------------------------------------------------------- */
 :root {
-  --bg: #f6f4ef; --panel: #ffffff; --ink: #1d1b18; --ink-2: #5d5850; --line: #e3ded4;
-  --accent: #8a1c1c; --accent-ink: #ffffff; --focus: #2f5d9e;
+  --groc: #ffc629; --groc-fort: #f2b200; --granat: #8a1c1c; --granat-fosc: #6d1414;
+  --tinta: #1e1633; --tinta-2: #5b5470; --fons: #ffffff; --suau: #f4f2f7; --linia: #e4e0ec;
+  --sobre-groc: #1e1633; --focus: #2f5d9e; --pocs: #9a94a8;
   --v1: #a50026; --v2: #e8603c; --v3: #c8b78a; --v4: #98cf5f; --v5: #3fa45b; --v6: #17703a;
-  --pocs: #9a958c;
-  --shadow: 0 6px 24px rgba(30, 25, 15, .12);
-  --r: 14px;
+  --ombra: 0 4px 18px rgba(30, 22, 51, .14);
+  --cara-trets: #1e1633;
+  --tipus-titol: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --tipus-text: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141311; --panel: #1f1d1a; --ink: #f1ede6; --ink-2: #b3ac9f; --line: #34302a;
-    --accent: #e0645a; --accent-ink: #1a0f0e; --focus: #8db4ef; --v3: #a99a70; --pocs: #6f6a62;
-    --shadow: 0 6px 24px rgba(0, 0, 0, .45);
+    --tinta: #f1eef8; --tinta-2: #b6aec8; --fons: #17131f; --suau: #221c2d; --linia: #362e45;
+    --granat: #e2645a; --granat-fosc: #c94f45; --focus: #8db4ef; --v3: #a99a70; --pocs: #7a7389;
+    --ombra: 0 4px 18px rgba(0, 0, 0, .5);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #141311; --panel: #1f1d1a; --ink: #f1ede6; --ink-2: #b3ac9f; --line: #34302a;
-  --accent: #e0645a; --accent-ink: #1a0f0e; --focus: #8db4ef; --v3: #a99a70; --pocs: #6f6a62;
-  --shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  --tinta: #f1eef8; --tinta-2: #b6aec8; --fons: #17131f; --suau: #221c2d; --linia: #362e45;
+  --granat: #e2645a; --granat-fosc: #c94f45; --focus: #8db4ef; --v3: #a99a70; --pocs: #7a7389;
+  --ombra: 0 4px 18px rgba(0, 0, 0, .5);
 }
+
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
-body {
-  background: var(--bg); color: var(--ink);
-  font: 15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
-  display: grid; grid-template-rows: auto auto 1fr; overflow: hidden;
-}
+html, body { margin: 0; }
+body { background: var(--fons); color: var(--tinta); font: 16px/1.5 var(--tipus-text); }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
-header {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+/* ---------- capçalera i portada ---------- */
+.barra-sup { display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: var(--groc); color: var(--sobre-groc); }
+.marca { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: inherit; }
+.marca img { width: 34px; height: 34px; border-radius: 9px; }
+.marca b { font: 800 19px/1 var(--tipus-titol); letter-spacing: -.01em; }
+.btn-contorn {
+  border: 2px solid var(--sobre-groc); background: transparent; color: var(--sobre-groc);
+  border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px;
 }
-.marca { display: flex; flex-direction: column; margin-right: auto; }
-.marca h1 { font: 700 21px/1.1 "Source Serif 4", Georgia, serif; margin: 0; letter-spacing: -.01em; }
-.marca span { color: var(--ink-2); font-size: 13px; }
-.pestanyes { display: flex; background: var(--bg); border-radius: 999px; padding: 3px; border: 1px solid var(--line); }
-.pestanyes button {
-  border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-weight: 500; color: var(--ink-2);
-}
-.pestanyes button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.btn {
-  border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 14px; font-weight: 500;
-}
-.btn.primari { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn:disabled { opacity: .5; cursor: default; }
+.btn-contorn:hover { background: rgba(30, 22, 51, .08); }
 
-.avis {
-  padding: 8px 16px; font-size: 13px; color: var(--ink-2); background: var(--bg);
-  border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+.portada {
+  background: var(--groc); color: var(--sobre-groc);
+  border-radius: 0 0 36px 36px; padding: 8px 20px 32px;
+  display: grid; gap: 22px; justify-items: center; text-align: center;
 }
-.avis strong { color: var(--ink); font-weight: 600; }
-.demo { background: #fff3c4; color: #5a4500; border-radius: 6px; padding: 1px 8px; font-weight: 600; font-size: 12px; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .demo { background: #4a3b05; color: #ffe08a; } }
+.cares { display: grid; grid-template-columns: repeat(6, minmax(0, 72px)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cares li { display: grid; justify-items: center; gap: 4px; font-size: 12px; font-weight: 700; }
+.cares svg { width: 100%; height: auto; }
+.cares li:nth-child(odd) svg { transform: rotate(-6deg); }
+.cares li:nth-child(even) svg { transform: rotate(5deg) translateY(4px); }
+.portada h1 { font: 800 clamp(34px, 8.6vw, 64px)/.98 var(--tipus-titol); letter-spacing: -.025em; margin: 0; max-width: 13ch; text-wrap: balance; }
+.portada .entradeta { font-size: clamp(17px, 2.6vw, 20px); line-height: 1.45; margin: 0; max-width: 34ch; text-wrap: pretty; }
+.portada .matis { font-size: 14px; margin: 0; max-width: 40ch; opacity: .85; }
+.accions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.btn-gran {
+  border: 0; border-radius: 999px; padding: 14px 22px; font: 700 17px/1.1 var(--tipus-text);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 52px;
+}
+.btn-gran.principal { background: var(--granat); color: #fff; box-shadow: 0 6px 0 var(--granat-fosc); }
+.btn-gran.principal:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--granat-fosc); }
+.btn-gran.secundari { background: #fff; color: #1e1633; box-shadow: 0 6px 0 rgba(30, 22, 51, .18); }
+.btn-gran.secundari:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(30, 22, 51, .18); }
+.demo { background: var(--sobre-groc); color: var(--groc); border-radius: 6px; padding: 2px 10px; font-weight: 700; font-size: 13px; }
 
-main { position: relative; min-height: 0; display: grid; grid-template-columns: 1fr 380px; }
-#mapa { height: 100%; width: 100%; background: var(--bg); }
-.vista-llista { display: none; overflow: auto; padding: 16px; }
+@media (min-width: 900px) {
+  .portada {
+    grid-template-columns: 1.15fr 1fr; justify-items: start; text-align: left; align-items: center;
+    padding: 20px max(32px, calc((100vw - 1180px) / 2)) 44px;
+  }
+  .portada .text { display: grid; gap: 18px; justify-items: start; }
+  .accions { justify-content: flex-start; }
+  .cares { grid-template-columns: repeat(3, 136px); gap: 22px 30px; justify-self: center; order: 2; }
+  .portada .cares .cara { width: 120px; }
+  .cares li { font-size: 16px; }
+  .cares li { font-size: 15px; }
+}
+@media (max-width: 899px) {
+  /* Al mòbil, les cares obren la portada (primer el que es veu, després el text) */
+  .portada .text { display: grid; gap: 16px; justify-items: center; }
+  .cares { order: -1; grid-template-columns: repeat(6, minmax(0, 54px)); gap: 4px; }
+  .accions { flex-direction: column; align-items: stretch; width: min(100%, 340px); }
+  .btn-gran { justify-content: center; padding: 12px 20px; font-size: 16px; min-height: 48px; }
+}
+
+/* ---------- selector de vista ---------- */
+.vistes { display: flex; justify-content: center; padding: 22px 16px 14px; }
+.pestanyes { display: inline-flex; background: var(--suau); border-radius: 999px; padding: 4px; border: 1px solid var(--linia); }
+.pestanyes button { border: 0; background: transparent; padding: 9px 18px; border-radius: 999px; font-weight: 700; color: var(--tinta-2); }
+.pestanyes button[aria-selected="true"] { background: var(--fons); color: var(--tinta); box-shadow: 0 1px 4px rgba(30, 22, 51, .18); }
+
+/* ---------- mapa i panell ---------- */
+main {
+  position: relative; display: grid; grid-template-columns: 1fr 400px;
+  height: min(820px, calc(100vh - 32px)); height: min(820px, calc(100svh - 32px));
+  margin: 0 auto; max-width: 1400px; border-top: 1px solid var(--linia); border-bottom: 1px solid var(--linia);
+}
+#mapa { height: 100%; width: 100%; background: var(--suau); }
+.vista-llista { display: none; overflow: auto; padding: 20px; }
 main.no-presencials #mapa, main.no-presencials .eines-mapa { display: none; }
 main.no-presencials .vista-llista { display: block; }
 
-.eines-mapa { position: absolute; top: 12px; left: 12px; right: 392px; z-index: 500; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+.eines-mapa { position: absolute; top: 12px; left: 12px; right: 412px; z-index: 500; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
 .eines-mapa > * { pointer-events: auto; }
-.cercador { position: relative; flex: 1 1 260px; max-width: 420px; }
+.cercador { position: relative; flex: 1 1 260px; max-width: 440px; }
 .cercador input, .vista-llista input {
-  width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--panel); box-shadow: var(--shadow);
+  width: 100%; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--linia);
+  background: var(--fons); box-shadow: var(--ombra); font-size: 16px;
 }
 .resultats {
-  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--panel);
-  border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); max-height: 50vh; overflow: auto; display: none;
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--fons);
+  border: 1px solid var(--linia); border-radius: 14px; box-shadow: var(--ombra); max-height: 50vh; overflow: auto; display: none;
 }
 .resultats.obert { display: block; }
 .resultats button, .item-llista {
-  display: flex; width: 100%; text-align: left; gap: 10px; align-items: center;
-  padding: 10px 14px; border: 0; background: transparent; border-bottom: 1px solid var(--line);
+  display: flex; width: 100%; text-align: left; gap: 12px; align-items: center;
+  padding: 11px 14px; border: 0; background: transparent; border-bottom: 1px solid var(--linia);
 }
-.resultats button:hover, .item-llista:hover { background: var(--bg); }
-.item-llista { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); margin-bottom: 8px; }
-.punt { width: 12px; height: 12px; border-radius: 50%; flex: none; border: 2px solid var(--pocs); }
-.meta { color: var(--ink-2); font-size: 13px; }
-.filtres { display: flex; gap: 6px; }
-.filtres button {
-  border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 7px 12px;
-  font-size: 13px; box-shadow: var(--shadow); color: var(--ink-2);
+.resultats button:hover, .item-llista:hover { background: var(--suau); }
+.item-llista { border: 1px solid var(--linia); border-radius: 14px; background: var(--fons); margin-bottom: 8px; }
+.punt { width: 14px; height: 14px; border-radius: 50%; flex: none; border: 2px solid var(--pocs); }
+.meta { color: var(--tinta-2); font-size: 14px; }
+.filtres { display: flex; gap: 6px; flex-wrap: wrap; }
+.filtres button, .btn-aprop {
+  border: 1px solid var(--linia); background: var(--fons); border-radius: 999px; padding: 8px 14px;
+  font-size: 14px; box-shadow: var(--ombra); color: var(--tinta-2); font-weight: 700;
 }
-.filtres button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; }
+.filtres button[aria-pressed="true"] { color: var(--tinta); border-color: var(--tinta); }
+.btn-aprop { border-color: var(--granat); color: var(--granat); }
+.btn-aprop[aria-pressed="true"] { background: var(--granat); color: #fff; }
 .aproparse {
   position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 500;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
-  font-size: 13px; box-shadow: var(--shadow); display: none;
+  background: var(--fons); border: 1px solid var(--linia); border-radius: 999px; padding: 6px 14px;
+  font-size: 13px; box-shadow: var(--ombra); display: none; white-space: nowrap;
 }
-
-aside {
-  background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 20px;
-  display: flex; flex-direction: column; gap: 18px;
-}
-aside h2 { font: 700 22px/1.2 "Source Serif 4", Georgia, serif; margin: 0; }
-aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); margin: 0 0 8px; font-weight: 600; }
-.etiqueta-gran { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; }
-.etiqueta-gran .punt { width: 16px; height: 16px; border: 0; }
-.barra { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
-.barra span { display: block; height: 100%; }
-.recompte { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; font-size: 12px; color: var(--ink-2); text-align: center; }
-.botons-valor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.botons-valor button {
-  border: 2px solid var(--line); background: var(--panel); border-radius: 12px; padding: 10px 6px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 600; font-size: 14px;
-}
-.botons-valor button .punt { border: 0; width: 18px; height: 18px; }
-.botons-valor button[aria-pressed="true"] { border-color: var(--ink); background: var(--bg); }
-.descripcio-valor { min-height: 3.2em; font-size: 13px; color: var(--ink-2); }
-.nota { font-size: 12.5px; color: var(--ink-2); border-left: 3px solid var(--line); padding-left: 10px; }
-.missatge { font-size: 14px; padding: 10px 12px; border-radius: 10px; background: var(--bg); }
-.missatge.error { color: var(--v1); }
-.escala-llegenda { display: grid; gap: 8px; }
-.escala-llegenda div { display: grid; grid-template-columns: 16px 76px 1fr; gap: 8px; align-items: start; font-size: 13px; }
-.escala-llegenda .punt { border: 0; margin-top: 3px; }
-.escala-llegenda b { font-weight: 600; }
-.formulari { display: grid; gap: 10px; }
-.formulari label { display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
-.formulari input, .formulari select { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
-.files { display: flex; gap: 8px; flex-wrap: wrap; }
-.tancar { margin-left: auto; border: 0; background: transparent; font-size: 22px; line-height: 1; color: var(--ink-2); }
-.cap { display: flex; align-items: flex-start; gap: 8px; }
-.atribucio { font-size: 11.5px; color: var(--ink-2); margin-top: auto; }
-.atribucio a { color: inherit; }
-.leaflet-container { font: inherit; }
 .anar-fitxa { display: none; }
 
-/* A prop meu */
-.btn-aprop {
-  border: 1px solid var(--accent); background: var(--panel); color: var(--accent); border-radius: 999px;
-  padding: 7px 12px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
+aside {
+  background: var(--fons); border-left: 1px solid var(--linia); overflow: auto; padding: 22px;
+  display: flex; flex-direction: column; gap: 20px;
 }
-.btn-aprop[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-.controls-aprop { display: grid; gap: 10px; }
-.controls-aprop .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.controls-aprop select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+aside h2 { font: 800 25px/1.12 var(--tipus-titol); letter-spacing: -.015em; margin: 0; }
+aside h3 { font: 700 15px/1.3 var(--tipus-text); color: var(--tinta-2); margin: 0 0 10px; }
+
+/* cares a la interfície */
+.cara { display: inline-block; flex: none; }
+.ico-28 { display: inline-flex; flex: none; }
+.ico-28 .cara { width: 28px; height: 28px; }
+.cares .cara { width: clamp(44px, 13vw, 64px); }
+.cara svg { display: block; width: 100%; height: 100%; }
+.etiqueta-gran { display: flex; align-items: center; gap: 12px; font: 800 24px/1 var(--tipus-titol); }
+.etiqueta-gran .cara { width: 52px; height: 52px; }
+.barra { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--linia); }
+.barra span { display: block; height: 100%; }
+.recompte { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; font-size: 13px; color: var(--tinta-2); text-align: center; }
+.botons-valor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.botons-valor button {
+  border: 2px solid var(--linia); background: var(--fons); border-radius: 16px; padding: 12px 4px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 700; font-size: 15px;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.botons-valor button .cara { width: 44px; height: 44px; }
+.botons-valor button:hover { border-color: var(--tinta-2); }
+.botons-valor button[aria-pressed="true"] { border-color: var(--tinta); background: var(--suau); transform: translateY(-2px); }
+.descripcio-valor { min-height: 3.2em; font-size: 14px; color: var(--tinta-2); margin: 10px 0 0; }
+.nota { font-size: 13.5px; color: var(--tinta-2); background: var(--suau); border-radius: 12px; padding: 10px 12px; margin: 0; }
+.missatge { font-size: 15px; padding: 12px 14px; border-radius: 12px; background: var(--suau); }
+.missatge.error { color: var(--v1); }
+.escala-llegenda { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.escala-llegenda li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; font-size: 14px; }
+.escala-llegenda .cara { width: 40px; height: 40px; }
+.escala-llegenda b { display: block; font-size: 15px; }
+.formulari { display: grid; gap: 12px; }
+.formulari label { display: grid; gap: 4px; font-size: 14px; color: var(--tinta-2); }
+.formulari input, .formulari select { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--linia); background: var(--fons); color: var(--tinta); font-size: 16px; }
+.files { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--linia); background: var(--fons); border-radius: 999px; padding: 9px 16px; font-weight: 700; }
+.btn.primari { background: var(--granat); border-color: var(--granat); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+.tancar { margin-left: auto; border: 0; background: var(--suau); width: 36px; height: 36px; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--tinta-2); flex: none; }
+.cap { display: flex; align-items: flex-start; gap: 10px; }
+.atribucio { font-size: 12px; color: var(--tinta-2); margin-top: auto; }
+.atribucio a { color: inherit; }
+.leaflet-container { font: inherit; }
+
+/* a prop meu */
+.controls-aprop { display: grid; gap: 12px; }
+.controls-aprop .fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.controls-aprop select { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--linia); background: var(--fons); color: var(--tinta); }
 .xips { display: flex; flex-wrap: wrap; gap: 6px; }
 .xips button {
-  display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel);
-  border-radius: 999px; padding: 5px 10px; font-size: 13px; color: var(--ink-2);
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--linia); background: var(--fons);
+  border-radius: 999px; padding: 4px 11px 4px 4px; font-size: 14px; color: var(--tinta-2);
 }
-.xips button .punt { width: 10px; height: 10px; border: 0; }
-.xips button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; background: var(--bg); }
-.xips button[aria-pressed="false"] .punt { opacity: .35; }
-.xips button .compte { font-variant-numeric: tabular-nums; color: var(--ink-2); font-weight: 400; }
-.grup-aprop h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 15px; }
-.grup-aprop h4 .punt { border: 0; }
-.grup-aprop h4 .meta { font-weight: 400; }
+.xips button .cara { width: 24px; height: 24px; }
+.xips button .punt { margin-left: 5px; }
+.xips button[aria-pressed="true"] { color: var(--tinta); border-color: var(--tinta); font-weight: 700; background: var(--suau); }
+.xips button[aria-pressed="false"] .cara, .xips button[aria-pressed="false"] .punt { opacity: .35; filter: grayscale(1); }
+.xips button .compte { font-variant-numeric: tabular-nums; color: var(--tinta-2); font-weight: 400; }
+.grup-aprop h4 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font: 800 18px/1.1 var(--tipus-titol); }
+.grup-aprop h4 .cara { width: 30px; height: 30px; }
+.grup-aprop h4 .meta { font: 400 14px var(--tipus-text); }
 .grup-aprop ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .grup-aprop li button {
   width: 100%; text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
-  border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 12px;
+  border: 1px solid var(--linia); background: var(--fons); border-radius: 12px; padding: 10px 12px;
 }
-.grup-aprop li button:hover { background: var(--bg); }
-.grup-aprop .dist { color: var(--ink-2); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tornar { border: 0; background: transparent; color: var(--accent); font-weight: 600; padding: 0; text-align: left; }
-.mes { border: 0; background: transparent; color: var(--ink-2); font-size: 13px; padding: 4px 0; text-decoration: underline; }
+.grup-aprop li button:hover { background: var(--suau); }
+.grup-aprop .dist { color: var(--tinta-2); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tornar { border: 0; background: transparent; color: var(--granat); font-weight: 700; padding: 0; text-align: left; }
+.mes { border: 0; background: transparent; color: var(--tinta-2); font-size: 14px; padding: 4px 0; text-decoration: underline; }
 .mode-afegir #mapa { cursor: crosshair; }
 
+/* ---------- peu i finestres d'informació ---------- */
+.peu { padding: 32px 20px 40px; text-align: center; display: grid; gap: 14px; justify-items: center; }
+.peu nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
+.peu nav button { border: 0; background: transparent; font: 700 15px var(--tipus-text); color: var(--tinta); padding: 6px 8px; border-radius: 8px; }
+.peu nav button:hover { background: var(--suau); }
+.peu p { margin: 0; font-size: 13px; color: var(--tinta-2); max-width: 60ch; }
+dialog.info {
+  border: 0; border-radius: 24px; padding: 0; max-width: min(620px, calc(100vw - 24px)); width: 100%;
+  background: var(--fons); color: var(--tinta); box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+dialog.info::backdrop { background: rgba(30, 22, 51, .5); }
+.info .contingut { padding: 24px; max-height: min(78vh, 760px); overflow: auto; }
+.info h2 { font: 800 28px/1.1 var(--tipus-titol); margin: 0 0 12px; letter-spacing: -.015em; }
+.info h3 { font: 700 17px/1.3 var(--tipus-text); margin: 18px 0 6px; }
+.info p, .info li { max-width: 62ch; }
+.passos { display: grid; gap: 14px; padding: 0; margin: 14px 0; list-style: none; counter-reset: pas; }
+.passos li { counter-increment: pas; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+.passos li::before {
+  content: counter(pas); width: 40px; height: 40px; border-radius: 50%; background: var(--groc); color: #1e1633;
+  display: grid; place-items: center; font: 800 20px var(--tipus-titol);
+}
+
 @media (max-width: 820px) {
-  /* Al mòbil, desplaçament normal de la pàgina; el mapa no ocupa tota la pantalla
-     perquè sempre quedi una franja fora del mapa on lliscar el dit. */
-  html, body { height: auto; }
-  body { display: block; overflow: visible; }
-  main { display: block; }
-  #mapa { height: 52vh; height: 52svh; }
+  main { display: block; height: auto; border-bottom: 0; }
+  #mapa { height: 56vh; height: 56svh; }
   main.no-presencials .vista-llista { min-height: 40vh; }
   .eines-mapa { top: 10px; left: 10px; right: 10px; }
-  aside { min-height: 60vh; }
-  /* Peu del mapa al mòbil: atribució en una sola línia petita, i els botons flotants per sobre */
+  aside { min-height: 50vh; border-left: 0; border-top: 1px solid var(--linia); padding: 22px 18px; }
   .leaflet-control-attribution { font-size: 10px; line-height: 1.3; padding: 1px 5px; }
   .leaflet-bottomright .leaflet-control-zoom { margin-bottom: 22px; }
-  .aproparse { bottom: auto; top: calc(52vh - 112px); top: calc(52svh - 112px); font-size: 12px; padding: 5px 12px; white-space: nowrap; }
+  .aproparse { bottom: auto; top: calc(56vh - 112px); top: calc(56svh - 112px); font-size: 12px; padding: 5px 12px; }
   .anar-fitxa {
-    position: absolute; top: calc(52vh - 68px); top: calc(52svh - 68px); left: 12px; z-index: 500; display: block;
-    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
-    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
+    position: absolute; top: calc(56vh - 68px); top: calc(56svh - 68px); left: 12px; z-index: 500; display: block;
+    border: 1px solid var(--linia); background: var(--fons); color: var(--tinta);
+    border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 700; box-shadow: var(--ombra);
   }
   main.no-presencials .anar-fitxa { display: none; }
-  .eines-mapa { right: 12px; }
-  aside { border-left: 0; border-top: 1px solid var(--line); }
-  .marca span { display: none; }
-  .marca { flex-basis: 100%; }
-  header { gap: 10px; }
-  #btn-afegir { margin-left: auto; padding: 7px 12px; }
+  .barra-sup { padding: 10px 16px; }
+  .portada { padding: 4px 16px 28px; border-radius: 0 0 28px 28px; }
+  .cares li { font-size: 11px; }
 }
 </style>
 </head>
 <body>
-<header>
-  <div class="marca">
-    <h1>Tracte lingüístic</h1>
-    <span>Com t'han tractat quan has parlat en català?</span>
-  </div>
-  <div class="pestanyes" role="tablist" aria-label="Vista">
-    <button role="tab" aria-selected="true" data-vista="mapa">Mapa</button>
-    <button role="tab" aria-selected="false" data-vista="no-presencials">No presencials</button>
-  </div>
-  <button class="btn primari" id="btn-afegir">Afegeix un lloc</button>
+<header class="barra-sup">
+  <a class="marca" href="./"><img src="icones/icona.svg" alt=""><b>Tracte lingüístic</b></a>
+  <button class="btn-contorn" id="btn-afegir" type="button">Afegeix un lloc</button>
 </header>
 
-<div class="avis">
-  <span><strong>Només es valora el respecte als drets lingüístics.</strong> No té cap relació amb la qualitat del producte ni del servei.</span>
-  <span class="demo" id="demo" hidden>Mode demostració · dades fictícies</span>
+<section class="portada" aria-labelledby="titol">
+  <div class="text">
+    <h1 id="titol">Com et tracten quan parles en català?</h1>
+    <p class="entradeta">Mira com tracten el català als bars, botigues i serveis del teu voltant, i explica com t'ha anat a tu.</p>
+    <div class="accions">
+      <button class="btn-gran principal" id="hero-aprop" type="button">📍 Què hi ha a prop meu</button>
+      <button class="btn-gran secundari" id="hero-cerca" type="button">Cerca un lloc</button>
+    </div>
+    <p class="matis">Només valorem el tracte lingüístic, no la qualitat del producte ni del servei.</p>
+    <span class="demo" id="demo" hidden>Mode demostració: dades fictícies</span>
+  </div>
+  <ul class="cares" id="cares-portada" aria-label="Les sis respostes possibles"></ul>
+</section>
+
+<div class="vistes">
+  <div class="pestanyes" role="tablist" aria-label="Què vols veure">
+    <button role="tab" aria-selected="true" data-vista="mapa">Al carrer</button>
+    <button role="tab" aria-selected="false" data-vista="no-presencials">Per telèfon i internet</button>
+  </div>
 </div>
 
 <main id="main">
   <div id="mapa" aria-label="Mapa d'establiments i serveis"></div>
   <div class="eines-mapa">
     <div class="cercador">
-      <input id="cerca" type="search" placeholder="Cerca un establiment o servei…" autocomplete="off" aria-label="Cerca">
+      <input id="cerca" type="search" placeholder="Cerca un bar, una botiga, un servei…" autocomplete="off" aria-label="Cerca un lloc">
       <div class="resultats" id="resultats" role="listbox"></div>
     </div>
     <div class="filtres" role="group" aria-label="Filtre">
@@ -247,14 +325,29 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
   <div class="aproparse" id="aproparse">Apropa't per veure tots els llocs</div>
   <button class="anar-fitxa" id="anar-fitxa" type="button">↓ Informació</button>
 
-  <section class="vista-llista" aria-label="Serveis no presencials">
-    <input id="cerca-np" type="search" placeholder="Cerca un servei telefònic, web o app…" aria-label="Cerca serveis no presencials">
+  <section class="vista-llista" aria-label="Serveis per telèfon i internet">
+    <input id="cerca-np" type="search" placeholder="Cerca un servei telefònic, una web o una app…" aria-label="Cerca serveis per telèfon i internet">
     <p class="meta" style="margin:12px 0">Atenció telefònica, webs, apps i xats d'empreses i administracions.</p>
     <div id="llista-np"></div>
   </section>
 
   <aside id="panell" aria-live="polite"></aside>
 </main>
+
+<footer class="peu">
+  <nav aria-label="Informació">
+    <button type="button" data-pagina="funciona">Com funciona</button>
+    <button type="button" data-pagina="quisom">Qui som</button>
+    <button type="button" data-pagina="contacte">Contacte</button>
+    <button type="button" data-pagina="legal">Avís legal</button>
+    <button type="button" data-pagina="privacitat">Privacitat</button>
+  </nav>
+  <p>Servei gratuït, sense publicitat i sense cap ús comercial de les dades.</p>
+</footer>
+
+<dialog class="info" id="finestra-info" aria-labelledby="info-titol">
+  <div class="contingut" id="info-contingut"></div>
+</dialog>
 
 <!-- Versions fixades amb verificació d'integritat (SRI): si el fitxer canvia al CDN, el navegador no l'executa -->
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
@@ -278,6 +371,26 @@ const MODALITATS = { presencial: "Establiment", servei_public: "Servei públic",
 const CANALS = { telefon: "Telèfon", web: "Web", app: "App", xat: "Xat", correu: "Correu", altres: "Altres" };
 const color = v => `var(--v${v})`;
 const cssColor = v => getComputedStyle(document.documentElement).getPropertyValue(`--v${v}`).trim();
+// Cares de l'escala (dibuix propi). v = 1…6; v = 0 per a "sense prou valoracions".
+function cara(v, etiqueta) {
+  const clar = v === 1 || v === 6;                 // fons fosc → trets clars
+  const t = v === 0 ? "var(--pocs)" : (clar ? "#ffffff" : "#1e1633");
+  const st = `stroke="${t}" stroke-width="4.2" stroke-linecap="round" fill="none"`;
+  const ulls = v === 6
+    ? `<path d="M17 28q5-6 10 0M37 28q5-6 10 0" ${st}/>`
+    : `<circle cx="22" cy="27" r="4.3" fill="${t}"/><circle cx="42" cy="27" r="4.3" fill="${t}"/>`;
+  const extres = {
+    0: `<path d="M23 44h2M31 44h2M39 44h2" ${st}/>`,
+    1: `<path d="M15 16l12 6M49 16l-12 6" ${st}/><path d="M20 48q12-12 24 0" ${st}/>`,
+    2: `<path d="M22 46q10-7 20 0" ${st}/>`,
+    3: `<path d="M22 43h20" ${st}/>`,
+    4: `<path d="M22 41q10 7 20 0" ${st}/>`,
+    5: `<path d="M18 38q14 14 28 0" ${st}/>`,
+    6: `<path d="M17 36h30q0 16-15 16t-15-16z" fill="${t}"/>`,
+  }[v];
+  const fons = v === 0 ? `fill="var(--suau)" stroke="var(--pocs)" stroke-width="2.5" stroke-dasharray="5 4"` : `fill="var(--v${v})"`;
+  return `<span class="cara"${etiqueta ? ` role="img" aria-label="${etiqueta}"` : ` aria-hidden="true"`}><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" ${fons}/>${ulls}${extres}</svg></span>`;
+}
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 
@@ -435,9 +548,9 @@ function estilMarcador(l, actiu) {
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   return {
     radius: actiu ? 11 : (v ? 8 : 6),
-    color: actiu ? css("--ink") : (v ? "#ffffff" : css("--pocs")),
+    color: actiu ? css("--tinta") : (v ? "#ffffff" : css("--pocs")),
     weight: actiu ? 3 : 2,
-    fillColor: v ? cssColor(v) : css("--panel"),
+    fillColor: v ? cssColor(v) : css("--fons"),
     fillOpacity: v ? 0.95 : 0.9,
   };
 }
@@ -475,13 +588,13 @@ function barra(dist, n) {
 function inici() {
   seleccionat = null;
   panell.innerHTML = `
-    <div><h2>Com funciona</h2>
-      <p class="meta" style="margin:6px 0 0">Tria un establiment o servei al mapa (o a la pestanya <em>No presencials</em>) i marca com t'han tractat quan hi has parlat en català. Sense comentaris: només una d'aquestes sis categories.</p></div>
-    <div><h3>L'escala</h3><div class="escala-llegenda">${
-      ESCALA.map(e => `<div><span class="punt" style="background:${color(e.valor)}"></span><b>${cap(e.etiqueta)}</b><span class="meta">${esc(e.descripcio)}</span></div>`).join("")
-    }</div></div>
-    <p class="nota">Un lloc no mostra cap qualificació fins que té almenys ${MINIM} valoracions. Els punts buits encara no en tenen prou.</p>
-    <p class="nota">La valoració és anònima. No es desa cap dada personal: només una empremta xifrada del dispositiu per evitar valoracions repetides.</p>
+    <div><h2>Toca un punt del mapa</h2>
+      <p class="meta" style="margin:8px 0 0">Veuràs com hi tracten el català i podràs dir com t'ha anat a tu. Només cal triar una d'aquestes sis cares.</p></div>
+    <ul class="escala-llegenda">${
+      ESCALA.map(e => `<li>${cara(e.valor)}<span><b>${cap(e.etiqueta)}</b><span class="meta">${esc(e.descripcio)}</span></span></li>`).join("")
+    }</ul>
+    <p class="nota">Els punts buits encara no tenen prou valoracions: en calen ${MINIM} perquè surti la cara.</p>
+    <p class="nota">Valorar és anònim. No et demanem cap dada.</p>
     ${atribucio()}`;
 }
 
@@ -507,7 +620,7 @@ function pintaFitxa(l, meva, missatge) {
     </div><button class="tancar" aria-label="Tanca" id="tanca">×</button></div>
     <div>
       <h3>Tracte lingüístic</h3>
-      ${v ? `<div class="etiqueta-gran"><span class="punt" style="background:${color(v)}"></span>${cap(ESCALA[v - 1].etiqueta)}</div>
+      ${v ? `<div class="etiqueta-gran">${cara(v)}${cap(ESCALA[v - 1].etiqueta)}</div>
              <div class="meta" style="margin:2px 0 10px">Mitjana de ${l.n} valoracions</div>`
           : `<div class="meta" style="margin-bottom:10px">${l.n ? `Només ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}: calen almenys ${MINIM} per mostrar-ne la qualificació.` : "Encara no té valoracions."}</div>`}
       ${barra(l.distribucio, l.n)}
@@ -516,7 +629,7 @@ function pintaFitxa(l, meva, missatge) {
       <h3>${meva ? "La teva valoració" : "Com t'han tractat?"}</h3>
       <div class="botons-valor" role="group" aria-label="Valoració">${
         ESCALA.map(e => `<button data-valor="${e.valor}" aria-pressed="${meva === e.valor}" title="${esc(e.descripcio)}">
-          <span class="punt" style="background:${color(e.valor)}"></span>${cap(e.etiqueta)}</button>`).join("")
+          ${cara(e.valor)}${cap(e.etiqueta)}</button>`).join("")
       }</div>
       <p class="descripcio-valor" id="descripcio">${meva ? esc(ESCALA[meva - 1].descripcio) : (matchMedia("(hover: none)").matches ? "Cada opció té una definició; la veuràs en marcar-la." : "Passa per sobre d'una opció per veure'n la definició.")}</p>
       ${missatge ? `<div class="missatge ${missatge.error ? "error" : ""}">${esc(missatge.text)}</div>` : ""}
@@ -653,7 +766,7 @@ const grupDe = l => l.qualificacio || SENSE;
 function pintaMarcadorsAprop() {
   capa.clearLayers(); marcadors.clear();
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  L.circle([aprop.lat, aprop.lon], { radius: aprop.radi, color: css("--accent"), weight: 1.5, fillOpacity: 0.04, interactive: false }).addTo(capa);
+  L.circle([aprop.lat, aprop.lon], { radius: aprop.radi, color: css("--granat"), weight: 1.5, fillOpacity: 0.04, interactive: false }).addTo(capa);
   L.circleMarker([aprop.lat, aprop.lon], { radius: 7, color: "#ffffff", weight: 3, fillColor: css("--focus"), fillOpacity: 1, interactive: false })
     .bindTooltip(aprop.origen === "ubicacio" ? "Ets aquí" : "Centre de la cerca").addTo(capa);
   for (const l of filesAprop()) {
@@ -674,14 +787,13 @@ function pintaPanellAprop(carregant) {
   const compte = {}; files.forEach(l => compte[grupDe(l)] = (compte[grupDe(l)] || 0) + 1);
   const ordre = [6, 5, 4, 3, 2, 1, SENSE];
   const etiquetaGrup = k => k === SENSE ? "Sense prou valoracions" : cap(ESCALA[k - 1].etiqueta);
-  const estilPunt = k => k === SENSE ? "background:var(--panel);border:2px solid var(--pocs)" : `background:${color(k)}`;
   const qualificats = files.filter(l => l.qualificacio).length;
 
   const grups = ordre.filter(k => aprop.valors.has(k) && compte[k]).map(k => {
     const llista = files.filter(l => grupDe(l) === k).sort((a, b) => a.distancia_m - b.distancia_m);
     const mostra = aprop.oberts.has(k) ? llista : llista.slice(0, 8);
     return `<section class="grup-aprop">
-      <h4><span class="punt" style="${estilPunt(k)}"></span>${etiquetaGrup(k)} <span class="meta">${llista.length}</span></h4>
+      <h4>${cara(k)}${etiquetaGrup(k)} <span class="meta">${llista.length}</span></h4>
       <ul>${mostra.map(l => `<li><button type="button" data-id="${l.id}">
         <span><b>${esc(l.nom)}</b><br><span class="meta">${esc(cap(l.categoria))}${l.n ? ` · ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}` : ""}</span></span>
         <span class="dist">${fmtDist(l.distancia_m)}</span></button></li>`).join("")}</ul>
@@ -710,7 +822,7 @@ function pintaPanellAprop(carregant) {
       </div>
       <div class="xips" role="group" aria-label="Qualificacions a mostrar">${
         ordre.map(k => `<button type="button" data-valor="${k}" aria-pressed="${aprop.valors.has(k)}">
-          <span class="punt" style="${estilPunt(k)}"></span>${etiquetaGrup(k)} <span class="compte">${carregant ? "" : (compte[k] || 0)}</span></button>`).join("")
+          ${cara(k)}${etiquetaGrup(k)} <span class="compte">${carregant ? "" : (compte[k] || 0)}</span></button>`).join("")
       }</div>
       <div class="fila"><button class="mes" type="button" id="recentra">${aprop.origen === "ubicacio" ? "Cerca al centre del mapa" : "Torna a la meva ubicació"}</button></div>
     </div>
@@ -748,7 +860,7 @@ cerca.addEventListener("input", () => {
   temps = setTimeout(async () => {
     const files = (await api.cerca({ text: t, limit: 12 })).filter(l => l.modalitat !== "no_presencial");
     resultats.innerHTML = files.length ? files.map((l, i) => `
-      <button data-i="${i}" role="option"><span class="punt" style="${l.mitjana ? `background:${color(Math.round(l.mitjana))};border:0` : ""}"></span>
+      <button data-i="${i}" role="option">${l.mitjana ? `<span class="ico-28">${cara(Math.round(l.mitjana))}</span>` : `<span class="punt"></span>`}
         <span><b>${esc(l.nom)}</b><br><span class="meta">${esc(cap(l.categoria))}${l.adreca ? " · " + esc(l.adreca) : ""}</span></span></button>`).join("")
       : `<div class="meta" style="padding:12px 14px">Cap resultat. Pots afegir-lo amb «Afegeix un lloc».</div>`;
     resultats.classList.add("obert");
@@ -783,7 +895,7 @@ async function carregaNoPresencials() {
   const t = document.getElementById("cerca-np").value.trim();
   const files = await api.cerca({ text: t || null, modalitat: "no_presencial", limit: 200 });
   document.getElementById("llista-np").innerHTML = files.length ? files.map((l, i) => `
-    <button class="item-llista" data-i="${i}"><span class="punt" style="${l.mitjana ? `background:${color(Math.round(l.mitjana))};border:0` : ""}"></span>
+    <button class="item-llista" data-i="${i}">${l.mitjana ? `<span class="ico-28">${cara(Math.round(l.mitjana))}</span>` : `<span class="punt"></span>`}
       <span><b>${esc(l.nom)}</b><br><span class="meta">${CANALS[l.canal] || ""} · ${esc(cap(l.categoria))} · ${l.n} valoraci${l.n === 1 ? "ó" : "ons"}</span></span></button>`).join("")
     : `<p class="meta">Encara no hi ha cap servei. Afegeix-ne un amb «Afegeix un lloc».</p>`;
   document.querySelectorAll("#llista-np .item-llista").forEach(b => b.onclick = () => obreFitxa(files[b.dataset.i]));
@@ -868,9 +980,78 @@ mapa.on("click", e => {
 
 document.getElementById("anar-fitxa").onclick = () => panell.scrollIntoView({ behavior: "smooth", block: "start" });
 
+// ---------- portada ----------
+function pintaPortada() {
+  document.getElementById("cares-portada").innerHTML =
+    ESCALA.map(e => `<li>${cara(e.valor)}<span>${cap(e.etiqueta)}</span></li>`).join("");
+}
+const anarAlMapa = () => document.querySelector(".vistes").scrollIntoView({ behavior: "smooth", block: "start" });
+document.getElementById("hero-aprop").onclick = () => {
+  anarAlMapa();
+  if (!aprop) btnAprop.click();
+};
+document.getElementById("hero-cerca").onclick = () => {
+  if (main.classList.contains("no-presencials")) document.querySelector('.pestanyes [data-vista="mapa"]').click();
+  anarAlMapa();
+  setTimeout(() => document.getElementById("cerca").focus({ preventScroll: true }), 450);
+};
+
+// ---------- pàgines d'informació (peu) ----------
+const ED = CFG.editor || {};
+const nomEditor = ED.nom ? esc(ED.nom) : null;
+const aviat = `<p class="meta">Aviat hi trobaràs aquesta informació.</p>`;
+const PAGINES = {
+  funciona: () => `<h2 id="info-titol">Com funciona</h2>
+    <ol class="passos">
+      <li><span><b>Busca un lloc.</b> Al mapa, amb el cercador o amb el botó «A prop meu». Si no hi és, el pots afegir.</span></li>
+      <li><span><b>Mira com hi tracten el català.</b> La cara del lloc resumeix el que n'han dit els altres. Surt quan té almenys ${MINIM} valoracions.</span></li>
+      <li><span><b>Explica com t'ha anat.</b> Tria una de les sis cares. Pots canviar-la quan vulguis.</span></li>
+    </ol>
+    <h3>Què vol dir cada cara</h3>
+    <ul class="escala-llegenda">${ESCALA.map(e => `<li>${cara(e.valor)}<span><b>${cap(e.etiqueta)}</b><span class="meta">${esc(e.descripcio)}</span></span></li>`).join("")}</ul>
+    <h3>Què no valorem</h3>
+    <p>Ni la qualitat, ni el preu, ni l'atenció en general: només el respecte als drets lingüístics. Per això no hi ha comentaris, només les sis cares.</p>
+    <h3>Si un lloc ha tancat</h3>
+    <p>A la fitxa del lloc hi ha l'opció «Aquest lloc ha tancat o no existeix». Quan ho confirmen diverses persones, es retira del mapa.</p>`,
+  quisom: () => `<h2 id="info-titol">Qui som</h2>
+    <p>Tracte lingüístic és un servei gratuït${nomEditor ? ` de ${nomEditor}` : ", editat per una fundació cultural"}. No té publicitat i no comercialitza cap dada.</p>
+    <p>Vol ajudar a saber on es respecten els drets lingüístics dels catalanoparlants, a partir de l'experiència de les persones usuàries.</p>
+    ${ED.web ? `<p><a href="${esc(ED.web)}" target="_blank" rel="noopener">${esc(ED.web)}</a></p>` : ""}`,
+  contacte: () => `<h2 id="info-titol">Contacte</h2>
+    ${ED.correu ? `<p>Escriu-nos a <a href="mailto:${esc(ED.correu)}">${esc(ED.correu)}</a>.</p>
+      <p>Si ets responsable d'un establiment i vols fer-nos arribar una observació sobre la seva fitxa, també ens pots escriure aquí.</p>` : aviat}`,
+  legal: () => `<h2 id="info-titol">Avís legal</h2>
+    ${nomEditor ? `<p>Aquest servei l'edita ${nomEditor}${ED.nif ? ` (NIF ${esc(ED.nif)})` : ""}${ED.adreca ? `, amb domicili a ${esc(ED.adreca)}` : ""}.</p>
+      <p>Les qualificacions reflecteixen l'experiència declarada per les persones usuàries sobre el respecte als drets lingüístics i no constitueixen cap valoració de la qualitat dels productes o serveis.</p>` : aviat}
+    <h3>Fonts de dades</h3>
+    <p>Dades d'establiments: © col·laboradors d'OpenStreetMap, llicència ODbL. Mapa de fons: © Institut Cartogràfic i Geològic de Catalunya (CC BY), OpenMapTiles i OpenStreetMap.</p>`,
+  privacitat: () => `<h2 id="info-titol">Privacitat</h2>
+    <p>No et demanem cap dada personal: ni nom, ni correu, ni compte d'usuari.</p>
+    <h3>Què desem</h3>
+    <ul>
+      <li>La teva valoració de cada lloc (una de les sis cares).</li>
+      <li>Una empremta xifrada del teu dispositiu i de la teva connexió, que no permet saber qui ets ni quina és la teva adreça. Només serveix per evitar valoracions repetides o massives.</li>
+      <li>Al teu navegador, un identificador aleatori del dispositiu. Si esborres les dades del navegador, desapareix.</li>
+    </ul>
+    <h3>La teva ubicació</h3>
+    <p>Només la fem servir quan prems «A prop meu», per buscar els llocs del voltant. No es desa.</p>
+    <h3>Què no fem</h3>
+    <p>No hi ha publicitat, ni galetes de seguiment, ni venem o cedim dades a ningú.</p>
+    ${nomEditor ? `<p>Responsable: ${nomEditor}.${ED.correu ? ` Per exercir els teus drets, escriu a <a href="mailto:${esc(ED.correu)}">${esc(ED.correu)}</a>.` : ""}</p>` : ""}`,
+};
+const finestra = document.getElementById("finestra-info");
+document.querySelectorAll("[data-pagina]").forEach(b => b.onclick = () => {
+  document.getElementById("info-contingut").innerHTML =
+    `<div class="cap" style="justify-content:flex-end"><button class="tancar" type="button" aria-label="Tanca" id="tanca-info">×</button></div>` + PAGINES[b.dataset.pagina]();
+  document.getElementById("tanca-info").onclick = () => finestra.close();
+  finestra.showModal();
+});
+finestra.addEventListener("click", e => { if (e.target === finestra) finestra.close(); });
+
 // ---------- arrencada ----------
 (async () => {
-  try { const e = await api.escala(); if (e?.length === 6) ESCALA = e; } catch (e) { console.warn(e); }
+  pintaPortada();
+  try { const e = await api.escala(); if (e?.length === 6) { ESCALA = e; pintaPortada(); } } catch (e) { console.warn(e); }
   inici();
   carregaMapa();
 })();

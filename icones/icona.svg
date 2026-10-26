@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#8a1c1c"/>
+  <!-- bafarada -->
+  <path d="M128 132h256a44 44 0 0 1 44 44v124a44 44 0 0 1-44 44H236l-78 62v-62h-30a44 44 0 0 1-44-44V176a44 44 0 0 1 44-44z" fill="#f6f4ef"/>
+  <!-- tres punts amb colors de l'escala -->
+  <circle cx="188" cy="238" r="30" fill="#a50026"/>
+  <circle cx="256" cy="238" r="30" fill="#c8b78a"/>
+  <circle cx="324" cy="238" r="30" fill="#17703a"/>
+</svg>

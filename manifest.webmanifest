@@ -1,0 +1,16 @@
+{
+  "name": "Tracte lingüístic",
+  "short_name": "Tracte",
+  "description": "Valora el respecte als drets lingüístics d'establiments i serveis.",
+  "lang": "ca",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#8a1c1c",
+  "icons": [
+    { "src": "icones/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

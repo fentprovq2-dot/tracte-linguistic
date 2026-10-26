@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tracte">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -253,8 +253,9 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
   <aside id="panell" aria-live="polite"></aside>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Versions fixades amb verificació d'integritat (SRI): si el fitxer canvia al CDN, el navegador no l'executa -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
 <script src="config.js"></script>
 <script>
 (() => {
@@ -412,8 +413,16 @@ const main = document.getElementById("main");
 // ---------- mapa ----------
 const mapa = L.map("mapa", { zoomControl: false }).setView(CFG.centre || [41.9794, 2.8214], CFG.zoom || 15);
 L.control.zoom({ position: "bottomright" }).addTo(mapa);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+// Mapa de fons: el proveïdor es defineix a config.js (CFG.mapa). Sense configuració, es fan servir
+// els servidors d'OpenStreetMap, adequats només per a proves i ús reduït.
+const MAPA = CFG.mapa && CFG.mapa.url ? CFG.mapa : {
+  url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">col·laboradors d\'OpenStreetMap</a>',
+  maxZoom: 19,
+};
+L.tileLayer(MAPA.url, {
+  maxZoom: MAPA.maxZoom || 19, tileSize: MAPA.tileSize || 256, zoomOffset: MAPA.zoomOffset || 0,
+  attribution: MAPA.attribution, crossOrigin: MAPA.crossOrigin || false,
 }).addTo(mapa);
 const capa = L.layerGroup().addTo(mapa);
 

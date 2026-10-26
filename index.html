@@ -226,7 +226,7 @@ aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; co
     </div>
     <div class="filtres" role="group" aria-label="Filtre">
       <button aria-pressed="true" data-filtre="">Tots</button>
-      <button aria-pressed="false" data-filtre="presencial">Comerços</button>
+      <button aria-pressed="false" data-filtre="presencial">Establiments</button>
       <button aria-pressed="false" data-filtre="servei_public">Serveis públics</button>
     </div>
     <button class="btn-aprop" id="btn-aprop" aria-pressed="false" type="button">📍 A prop meu</button>
@@ -260,7 +260,7 @@ const ESCALA_DEFECTE = [
   { valor: 6, etiqueta: "idoni",   descripcio: "Català per defecte en l'atenció i també en retolació, documentació i canals (web, tiquets, carta)." },
 ];
 const MINIM = 3;
-const MODALITATS = { presencial: "Comerç o establiment", servei_public: "Servei públic", no_presencial: "Servei no presencial" };
+const MODALITATS = { presencial: "Establiment", servei_public: "Servei públic", no_presencial: "Servei no presencial" };
 const CANALS = { telefon: "Telèfon", web: "Web", app: "App", xat: "Xat", correu: "Correu", altres: "Altres" };
 const color = v => `var(--v${v})`;
 const cssColor = v => getComputedStyle(document.documentElement).getPropertyValue(`--v${v}`).trim();
@@ -597,7 +597,7 @@ async function carregaAprop({ panell: ambPanell = true, encaixa = false } = {}) 
   }
 }
 
-// files visibles segons el filtre de modalitat (Tots / Comerços / Serveis públics)
+// files visibles segons el filtre de modalitat (Tots / Establiments / Serveis públics)
 const filesAprop = () => aprop.files.filter(l => !filtre || l.modalitat === filtre);
 const grupDe = l => l.qualificacio || SENSE;
 
@@ -754,7 +754,7 @@ function formulariAfegir() {
     <form class="formulari" id="form-nou">
       <label>Tipus
         <select name="modalitat" id="sel-modalitat">
-          <option value="presencial">Comerç o establiment</option>
+          <option value="presencial">Establiment (bar, restaurant, botiga…)</option>
           <option value="servei_public">Servei públic presencial</option>
           <option value="no_presencial" ${npActiu ? "selected" : ""}>Servei no presencial (telèfon, web, app…)</option>
         </select></label>
